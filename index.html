@@ -190,8 +190,8 @@
 
     <div class="channel-row">
       <div class="input-group">
-        <label>SLACK CHANNEL</label>
-        <input type="text" id="slackChannel" value="test_l10n_qa" placeholder="channel name (no #)" />
+        <label>SLACK CHANNEL ID <span style="color:var(--text3);font-weight:400;">(right-click channel in Slack → Copy link → last part of URL)</span></label>
+        <input type="text" id="slackChannel" value="" placeholder="e.g. C0123ABCDEF" />
       </div>
       <button class="btn btn-sm btn-accent" onclick="fetchAnnouncements()">↻ Fetch</button>
     </div>
@@ -427,31 +427,21 @@ async function fetchAnnouncements() {
   const channel = document.getElementById('slackChannel').value.trim() || 'test_l10n_qa';
   const queue = document.getElementById('announcementQueue');
   queue.innerHTML = '<div class="empty-queue">⏳ Fetching from Slack...</div>';
-  log(`→ Fetching messages from #${channel}...`, 'info');
+  log(`→ Fetching messages from channel ${channel}...`, 'info');
 
   try {
-    // Look up channel ID from name
-    const chanList = await slackGet('conversations.list', { types: 'public_channel', limit: 200 });
-    const chanObj = (chanList.channels || []).find(c => c.name === channel);
-    if (!chanObj) throw new Error(`Channel #${channel} not found — make sure the bot is invited to it`);
-
-    const history = await slackGet('conversations.history', { channel: chanObj.id, limit: 50 });
+    // Use channel ID directly — no lookup needed
+    const history = await slackGet('conversations.history', { channel: channel, limit: 50 });
     const messages = history.messages || [];
 
     const announcements = [];
     for (const m of messages) {
       if ((m.text || '').toUpperCase().includes('FEATURE ANNOUNCEMENT')) {
         const featureMatch = m.text.match(/Feature:\s*([^\n]+)/i);
-        // Get user display name
-        let userName = m.username || m.user || 'Unknown';
-        try {
-          const userInfo = await slackGet('users.info', { user: m.user });
-          userName = userInfo.user?.real_name || userInfo.user?.name || userName;
-        } catch {}
         announcements.push({
           text: m.text,
           ts: m.ts,
-          user: userName,
+          user: m.username || m.user || 'Unknown',
           feature: featureMatch ? featureMatch[1].trim() : 'Feature Announcement'
         });
         if (announcements.length >= 5) break;
