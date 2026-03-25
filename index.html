@@ -25,6 +25,16 @@
   .badge-notion { background: rgba(123,97,255,0.15); color: var(--accent2); border: 1px solid rgba(123,97,255,0.3); }
   .badge-slack  { background: rgba(79,255,176,0.1); color: var(--accent); border: 1px solid rgba(79,255,176,0.25); }
 
+  .api-key-bar { display: flex; gap: 8px; align-items: flex-end; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; }
+  .api-key-bar .input-group { flex: 1; }
+  .api-key-bar label { display: block; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text2); margin-bottom: 5px; letter-spacing: 0.5px; }
+  .api-key-bar input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; padding: 9px 12px; outline: none; transition: border-color 0.2s; }
+  .api-key-bar input:focus { border-color: var(--accent2); }
+  .api-key-bar input::placeholder { color: var(--text3); }
+  .api-key-status { font-size: 11px; font-family: 'JetBrains Mono', monospace; white-space: nowrap; padding: 9px 0 0; }
+  .api-key-status.ok { color: var(--accent); }
+  .api-key-status.missing { color: var(--error); }
+
   .section-label { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
 
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
@@ -140,6 +150,14 @@
 <div class="integrations">
   <span class="badge badge-slack">● Slack</span>
   <span class="badge badge-notion">● Notion</span>
+</div>
+
+<div class="api-key-bar">
+  <div class="input-group">
+    <label>ANTHROPIC API KEY</label>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-..." oninput="saveApiKey()" />
+  </div>
+  <div class="api-key-status missing" id="apiKeyStatus">⚠ not set</div>
 </div>
 
 <div class="tabs">
@@ -293,6 +311,16 @@ React with ✅ once scenarios are saved to Notion.</div>
 let selectedAnnouncement = null;
 let fetchedAnnouncements = [];
 
+// Load saved API key on startup
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('anthropic_api_key');
+  if (saved) {
+    document.getElementById('apiKeyInput').value = saved;
+    document.getElementById('apiKeyStatus').textContent = '✓ saved';
+    document.getElementById('apiKeyStatus').className = 'api-key-status ok';
+  }
+});
+
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['fetch','manual','setup'][i] === name));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -310,11 +338,37 @@ function log(msg, type = 'info') {
   panel.scrollTop = panel.scrollHeight;
 }
 
+function getApiKey() {
+  return localStorage.getItem('anthropic_api_key') || document.getElementById('apiKeyInput')?.value.trim() || '';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const statusEl = document.getElementById('apiKeyStatus');
+  if (key.startsWith('sk-ant-')) {
+    localStorage.setItem('anthropic_api_key', key);
+    statusEl.textContent = '✓ saved';
+    statusEl.className = 'api-key-status ok';
+  } else {
+    statusEl.textContent = '⚠ not set';
+    statusEl.className = 'api-key-status missing';
+  }
+}
+
 async function callClaude(messages, systemPrompt, mcpServers = []) {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('No API key set — paste your Anthropic API key at the top');
   const body = { model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: systemPrompt, messages };
   if (mcpServers.length) body.mcp_servers = mcpServers;
   const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify(body)
   });
   return res.json();
 }
