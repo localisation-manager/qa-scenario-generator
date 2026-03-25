@@ -504,16 +504,6 @@ Generate 6–8 scenarios. Extract any URLs from the announcement text into resou
   return JSON.parse(clean);
 }
 
-  const data = await callClaude(
-    [{ role: 'user', content: `Feature area: ${featureTag}\n\nAnnouncement:\n${text}` }],
-    system
-  );
-
-  const textContent = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
-  const clean = textContent.replace(/```json|```/g, '').trim();
-  return JSON.parse(clean);
-}
-
 async function createNotionScenario(dbId, scenario, featureName, featureTag, resourceLinks) {
   const resourceText = resourceLinks && resourceLinks.length
     ? resourceLinks.join('\n')
@@ -544,28 +534,6 @@ ${scenario.steps.map((s,i)=>`${i+1}. ${s}`).join('\n')}
 ${resourceText ? `**Other resources:**\n${resourceText}` : ''}
 
 After creating the page, respond with ONLY the page URL on a single line.`;
-
-  const data = await callClaude(
-    [{ role: 'user', content: `Create Notion QA scenario page: ${scenario.title}` }],
-    system,
-    [{ type: 'url', url: 'https://mcp.notion.com/mcp', name: 'notion-mcp' }]
-  );
-
-  const toolResults = data.content?.filter(b => b.type === 'mcp_tool_result') || [];
-  for (const r of toolResults) {
-    try {
-      const p = JSON.parse(r.content?.[0]?.text || '');
-      if (p.url) return { url: p.url };
-      if (p.id) return { url: `https://notion.so/${p.id.replace(/-/g,'')}` };
-    } catch {}
-  }
-  const textContent = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
-  const urlMatch = textContent.match(/https:\/\/(?:www\.)?notion\.so\/[^\s)>\n]+/);
-  if (urlMatch) return { url: urlMatch[0] };
-  const uuidMatch = textContent.match(/[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}/i);
-  if (uuidMatch) return { url: `https://notion.so/${uuidMatch[0].replace(/-/g,'')}` };
-  return { url: null };
-}
 
   const data = await callClaude(
     [{ role: 'user', content: `Create Notion QA scenario page: ${scenario.title}` }],
