@@ -209,8 +209,7 @@
   <button class="btn btn-sm" onclick="resetResults()" style="width:100%;margin-top:8px;">&#x21A9; Clear results</button>
 </div>
 
-<script>
-var selectedAnnouncement = null;
+<script>var selectedAnnouncement = null;
 var fetchedAnnouncements = [];
 
 window.addEventListener('DOMContentLoaded', function() {
@@ -269,12 +268,6 @@ async function notionReq(method, path, body) {
   var d = await r.json(); if(d.status && d.status>=400) throw new Error('Notion: '+(d.message||d.code||'error')); return d;
 }
 
-async function findNotionDb(name) {
-  var d = await notionReq('POST','search',{query:name,filter:{value:'database',property:'object'}});
-  var m = (d.results||[]).find(function(r){ return r.object==='database' && (r.title||[]).some(function(t){ return (t.plain_text||'').toLowerCase().includes(name.toLowerCase()); }); });
-  return m ? m.id : null;
-}
-
 async function fetchAnnouncements() {
   var channelId = document.getElementById('slackChannelId').value.trim();
   var queue = document.getElementById('fetchQueue');
@@ -321,11 +314,47 @@ function selectAnnouncement(i,el){
   document.getElementById('fetchGenerateBtn').disabled=false;
 }
 
+function extractSlackUrls(text) {
+  var urls = [];
+  // Slack angle-bracket format: <https://url|label> or <https://url>
+  var parts = text.split('<');
+  for(var i=1;i<parts.length;i++){
+    var chunk = parts[i].split('>')[0];
+    var url = chunk.split('|')[0];
+    if(url.indexOf('http')===0) urls.push(url);
+  }
+  return urls;
+}
+
+function cleanSlackText(text) {
+  // <https://url|label> -> label
+  var out = '';
+  var parts = text.split('<');
+  out += parts[0];
+  for(var i=1;i<parts.length;i++){
+    var close = parts[i].indexOf('>');
+    if(close>=0){
+      var inner = parts[i].slice(0,close);
+      var pipe = inner.indexOf('|');
+      out += (pipe>=0 ? inner.slice(pipe+1) : inner) + parts[i].slice(close+1);
+    } else {
+      out += '<'+parts[i];
+    }
+  }
+  return out;
+}
+
 async function generateScenarios(text) {
   var sys = 'You are a senior QA engineer for Fresha. Given a feature announcement, generate QA test scenarios.\nRespond ONLY with valid JSON, no markdown:\n{"feature_name":"short name","resource_links":["URLs found in text, empty array if none"],"scenarios":[{"title":"title","type":"functional|edge_case|regression|ux|performance","priority":"high|medium|low","description":"Given [context], when [action], then [expected outcome]","navigation":"App > Section > Action","notes":"Extra instructions for testers","steps":["Step 1","Step 2"]}]}\nGenerate 6-8 scenarios.';
-  var d = await callClaude([{role:'user',content:'Generate QA scenarios:\n\n'+text}], sys);
+  var cleanedText = cleanSlackText(text);
+  var extractedUrls = extractSlackUrls(text);
+  var d = await callClaude([{role:'user',content:'Generate QA scenarios:\n\n'+cleanedText}], sys);
   var txt = (d.content||[]).filter(function(b){ return b.type==='text'; }).map(function(b){ return b.text; }).join('');
-  return JSON.parse(txt.replace(/```json|```/g,'').trim());
+  var parsed = JSON.parse(txt.replace(/```json|```/g,'').trim());
+  extractedUrls.forEach(function(u){
+    if((parsed.resource_links||[]).indexOf(u)<0){ parsed.resource_links=parsed.resource_links||[]; parsed.resource_links.push(u); }
+  });
+  return parsed;
 }
 
 async function createNotionPage(dbId, s, featureName, links) {
@@ -337,7 +366,11 @@ async function createNotionPage(dbId, s, featureName, links) {
   if(s.notes){ ch.push({object:'block',type:'heading_2',heading_2:{rich_text:rt('Notes')}}); ch.push({object:'block',type:'paragraph',paragraph:{rich_text:rt(s.notes)}}); }
   ch.push({object:'block',type:'heading_2',heading_2:{rich_text:rt('Test Steps')}});
   (s.steps||[]).forEach(function(step){ ch.push({object:'block',type:'numbered_list_item',numbered_list_item:{rich_text:rt(step)}}); });
-  if(links&&links.length){ ch.push({object:'block',type:'heading_2',heading_2:{rich_text:rt('Other Resources')}}); links.forEach(function(url){ ch.push({object:'block',type:'paragraph',paragraph:{rich_text:[{type:'text',text:{content:url,link:{url:url}}}]}}); }); }
+  if(links&&links.length){
+    ch.push({object:'block',type:'heading_2',heading_2:{rich_text:rt('Other Resources')}});
+    // Plain text only — no link objects to avoid Notion URL validation errors
+    ch.push({object:'block',type:'paragraph',paragraph:{rich_text:rt(links.join('\n'))}});
+  }
   var page = await notionReq('POST','pages',{parent:{database_id:dbId},properties:{'Testing scenario':{title:rt(s.title)},'Feature / Area':{select:{name:'New features'}},'Navigation':{rich_text:rt(s.navigation||'')}},children:ch});
   if(page.url) return page.url;
   if(page.id) return 'https://notion.so/'+page.id.replace(/-/g,'');
@@ -346,8 +379,9 @@ async function createNotionPage(dbId, s, featureName, links) {
 
 async function runPipelineFetch(){
   if(!selectedAnnouncement) return;
-  var btn=document.getElementById('fetchGenerateBtn');
-  await runPipeline(selectedAnnouncement.text, document.getElementById('dbName').value.trim(), btn);
+  var dbId = document.getElementById('dbName').value;
+  var btn = document.getElementById('fetchGenerateBtn');
+  await runPipeline(selectedAnnouncement.text, dbId, btn);
   var sel=document.querySelector('.announcement-item.selected');
   if(sel){ sel.classList.add('processed'); var b=sel.querySelector('.ann-badge'); if(b){b.textContent='DONE';b.className='ann-badge done';} }
   selectedAnnouncement=null; btn.disabled=true;
@@ -356,10 +390,10 @@ async function runPipelineFetch(){
 async function runPipelineManual(){
   var text=document.getElementById('manualText').value.trim();
   if(!text){ log('Paste an announcement first','warn'); return; }
-  await runPipeline(text, document.getElementById('dbName2').value.trim(), document.getElementById('manualGenerateBtn'));
+  await runPipeline(text, document.getElementById('dbName2').value, document.getElementById('manualGenerateBtn'));
 }
 
-async function runPipeline(text, dbName, btn){
+async function runPipeline(text, dbId, btn){
   btn.disabled=true; btn.textContent='Running...';
   document.getElementById('scenariosList').innerHTML='';
   document.getElementById('resultsSection').style.display='none';
@@ -373,13 +407,10 @@ async function runPipeline(text, dbName, btn){
     if(links.length){ rb.style.display='flex'; document.getElementById('resourceLinks').innerHTML=links.map(function(u){ return '<a href="'+u+'" target="_blank" style="color:var(--accent2);font-size:11px;font-family:monospace;">'+u+'</a>'; }).join(''); } else { rb.style.display='none'; }
     document.getElementById('resultsSection').style.display='block';
     document.getElementById('summaryCount').textContent=parsed.scenarios.length+' scenarios';
-    document.getElementById('summaryStatus').textContent='finding notion database...';
-    document.getElementById('summaryEmoji').textContent='🔍';
-    parsed.scenarios.forEach(function(s,i){ renderCard(s,i); });
-    log('Finding Notion database "'+dbName+'"...','info');
-    var dbId = dbName; log('Using database: '+dbName,'ok');
     document.getElementById('summaryStatus').textContent='saving to notion...';
     document.getElementById('summaryEmoji').textContent='💾';
+    parsed.scenarios.forEach(function(s,i){ renderCard(s,i); });
+    log('Saving to Notion...','info');
     var saved=0, failed=0;
     for(var i=0;i<parsed.scenarios.length;i++){
       var s=parsed.scenarios[i]; setCardStatus(i,'saving');
