@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QA Scenario Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0f14; --surface: #13161e; --surface2: #1a1e28; --border: #262b3a;
+    --border2: #2e3447; --accent: #4fffb0; --accent2: #7b61ff; --accent3: #ff6b6b;
+    --text: #e8eaf0; --text2: #8a90a4; --text3: #555d75;
+    --warning: #ffd166; --error: #ff6b6b;
+  }
+  body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 28px 22px; }
+
+  .header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 28px; }
+  .logo-mark { width: 44px; height: 44px; background: linear-gradient(135deg, var(--accent2), var(--accent)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .header-text h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .header-text p { font-size: 12px; color: var(--text2); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+
+  .integrations { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; text-transform: uppercase; }
+  .badge-notion { background: rgba(123,97,255,0.15); color: var(--accent2); border: 1px solid rgba(123,97,255,0.3); }
+  .badge-slack  { background: rgba(79,255,176,0.1); color: var(--accent); border: 1px solid rgba(79,255,176,0.25); }
+
+  .section-label { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 2px; background: var(--surface2); border-radius: 10px; padding: 3px; margin-bottom: 20px; }
+  .tab { flex: 1; text-align: center; padding: 9px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--text2); transition: all 0.2s; border: none; background: none; font-family: 'Syne', sans-serif; }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* SLACK FETCH */
+  .channel-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 14px; }
+  .channel-row .input-group { flex: 1; }
+  .input-group label { display: block; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text2); margin-bottom: 5px; }
+  input[type="text"] { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; padding: 9px 12px; outline: none; transition: border-color 0.2s; }
+  input[type="text"]:focus { border-color: var(--accent2); }
+  input[type="text"]::placeholder { color: var(--text3); }
+
+  .announcement-queue { display: flex; flex-direction: column; gap: 10px; }
+  .announcement-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s; position: relative; }
+  .announcement-item:hover { border-color: var(--accent2); }
+  .announcement-item.selected { border-color: var(--accent2); background: rgba(123,97,255,0.08); }
+  .announcement-item.processed { opacity: 0.4; pointer-events: none; }
+  .ann-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .ann-feature { font-size: 13px; font-weight: 700; color: var(--text); }
+  .ann-time { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text3); flex-shrink: 0; }
+  .ann-preview { font-size: 11.5px; color: var(--text2); line-height: 1.5; font-family: 'JetBrains Mono', monospace; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .ann-badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; margin-bottom: 5px; }
+  .ann-badge.new     { background: rgba(79,255,176,0.15); color: var(--accent); border: 1px solid rgba(79,255,176,0.3); }
+  .ann-badge.done    { background: rgba(138,144,164,0.1); color: var(--text3); border: 1px solid var(--border); }
+
+  .select-indicator { position: absolute; top: 14px; right: 14px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 10px; transition: all 0.2s; }
+  .announcement-item.selected .select-indicator { background: var(--accent2); border-color: var(--accent2); }
+  .announcement-item.selected .select-indicator::after { content: '✓'; color: #fff; font-weight: 700; }
+
+  .empty-queue { text-align: center; padding: 32px; color: var(--text3); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  /* MANUAL */
+  textarea { width: 100%; min-height: 150px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; padding: 12px 14px; resize: vertical; outline: none; transition: border-color 0.2s; }
+  textarea:focus { border-color: var(--accent2); }
+  textarea::placeholder { color: var(--text3); }
+
+  .config-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+
+  /* BUTTONS */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 12px 20px; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; letter-spacing: 0.2px; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent2), #9d85ff); color: #fff; box-shadow: 0 4px 20px rgba(123,97,255,0.3); width: 100%; }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(123,97,255,0.4); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-sm { padding: 8px 14px; font-size: 12px; border-radius: 8px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+  .btn-sm:hover { background: var(--border); color: var(--text); }
+  .btn-accent { background: rgba(79,255,176,0.1); color: var(--accent); border: 1px solid rgba(79,255,176,0.3); }
+  .btn-accent:hover { background: rgba(79,255,176,0.18); }
+
+  /* LOG */
+  .log-panel { background: #0a0c10; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; min-height: 70px; max-height: 180px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.8; margin-bottom: 18px; }
+  .log-entry { display: flex; gap: 10px; }
+  .log-time { color: var(--text3); flex-shrink: 0; }
+  .log-ok { color: var(--accent); } .log-err { color: var(--error); } .log-info { color: var(--text2); } .log-warn { color: var(--warning); }
+
+  /* RESULTS */
+  .summary-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(79,255,176,0.07); border: 1px solid rgba(79,255,176,0.2); border-radius: 10px; margin-bottom: 14px; }
+  .summary-bar span { font-size: 13px; font-weight: 700; color: var(--accent); }
+  .summary-bar p { font-size: 11px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+
+  .scenarios-list { display: flex; flex-direction: column; gap: 10px; }
+  .scenario-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; transition: border-color 0.2s; }
+  .scenario-card.saved { border-color: rgba(79,255,176,0.35); }
+  .scenario-card.failed { border-color: rgba(255,107,107,0.35); }
+  .scenario-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+  .scenario-title { font-size: 13px; font-weight: 700; line-height: 1.4; }
+  .scenario-status { flex-shrink: 0; font-size: 10px; font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border-radius: 100px; font-weight: 600; }
+  .status-pending { background: rgba(138,144,164,0.15); color: var(--text2); }
+  .status-saving  { background: rgba(123,97,255,0.2);   color: var(--accent2); }
+  .status-saved   { background: rgba(79,255,176,0.15);  color: var(--accent); }
+  .status-failed  { background: rgba(255,107,107,0.15); color: var(--error); }
+  .scenario-meta { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 6px; }
+  .tag { font-size: 10px; font-family: 'JetBrains Mono', monospace; padding: 2px 7px; border-radius: 5px; background: var(--surface); border: 1px solid var(--border); color: var(--text2); }
+  .tag.priority-high   { border-color: rgba(255,107,107,0.4); color: var(--error); }
+  .tag.priority-medium { border-color: rgba(255,209,102,0.4); color: var(--warning); }
+  .tag.priority-low    { border-color: rgba(79,255,176,0.3);  color: var(--accent); }
+  .tag.tag-new-features { border-color: rgba(123,97,255,0.4); color: var(--accent2); background: rgba(123,97,255,0.08); }
+  .scenario-desc { font-size: 12px; color: var(--text2); line-height: 1.5; font-family: 'JetBrains Mono', monospace; }
+
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* SETUP GUIDE */
+  .setup-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .setup-step { display: flex; gap: 14px; margin-bottom: 18px; }
+  .setup-num { width: 28px; height: 28px; border-radius: 50%; background: rgba(123,97,255,0.2); border: 1px solid var(--accent2); color: var(--accent2); font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .setup-content h4 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .setup-content p { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .code-snippet { background: #0a0c10; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); margin-top: 7px; }
+
+  .notice { display: flex; gap: 10px; align-items: flex-start; background: rgba(255,209,102,0.07); border: 1px solid rgba(255,209,102,0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+  .notice-icon { font-size: 16px; flex-shrink: 0; }
+  .notice p { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .notice strong { color: var(--warning); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-mark">🧪</div>
+  <div class="header-text">
+    <h1>QA Scenario Generator</h1>
+    <p>slack announcements → notion scenarios</p>
+  </div>
+</div>
+
+<div class="integrations">
+  <span class="badge badge-slack">● Slack</span>
+  <span class="badge badge-notion">● Notion</span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('fetch')">📡 Fetch from Slack</button>
+  <button class="tab" onclick="switchTab('manual')">✏️ Manual</button>
+  <button class="tab" onclick="switchTab('setup')">⚙️ Workflow Setup</button>
+</div>
+
+<!-- TAB: FETCH FROM SLACK -->
+<div class="tab-panel active" id="tab-fetch">
+  <div class="card">
+    <div class="card-title">📡 Pull Announcements from Slack</div>
+
+    <div class="channel-row">
+      <div class="input-group">
+        <label>SLACK CHANNEL</label>
+        <input type="text" id="slackChannel" value="fresha_team" placeholder="channel name (no #)" />
+      </div>
+      <button class="btn btn-sm btn-accent" onclick="fetchAnnouncements()">↻ Fetch</button>
+    </div>
+
+    <div class="config-row" style="margin-top:0; margin-bottom:14px;">
+      <div class="input-group">
+        <label>NOTION DATABASE</label>
+        <input type="text" id="dbName" value="fresha partner scenarios" />
+      </div>
+      <div class="input-group">
+        <label>FEATURE TAG</label>
+        <input type="text" id="featureTag" value="POS" />
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-bottom:8px">Unprocessed announcements</div>
+    <div id="announcementQueue">
+      <div class="empty-queue">Click "↻ Fetch" to load announcements from Slack</div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="generateBtn" onclick="runPipeline()" disabled>
+    ✨ Generate & Save Selected to Notion
+  </button>
+</div>
+
+<!-- TAB: MANUAL -->
+<div class="tab-panel" id="tab-manual">
+  <div class="card">
+    <div class="card-title">✏️ Manual Input</div>
+    <textarea id="announcementText" placeholder="Paste a feature announcement here..."></textarea>
+    <div class="config-row">
+      <div class="input-group">
+        <label>NOTION DATABASE</label>
+        <input type="text" id="dbName2" value="fresha partner scenarios" />
+      </div>
+      <div class="input-group">
+        <label>FEATURE TAG</label>
+        <input type="text" id="featureTag2" value="POS" />
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-primary" id="generateBtn2" onclick="runPipelineManual()">✨ Generate & Save to Notion</button>
+</div>
+
+<!-- TAB: SETUP GUIDE -->
+<div class="tab-panel" id="tab-setup">
+  <div class="notice">
+    <div class="notice-icon">💡</div>
+    <p>Set up a <strong>Slack Workflow</strong> to automatically ping your QA team every time a feature announcement is posted — with a direct link to this tool.</p>
+  </div>
+
+  <div class="setup-card">
+    <div class="section-label" style="margin-bottom:16px">Slack Workflow Builder — Step by Step</div>
+
+    <div class="setup-step">
+      <div class="setup-num">1</div>
+      <div class="setup-content">
+        <h4>Open Workflow Builder</h4>
+        <p>In Slack, click your workspace name → <strong>Tools & settings</strong> → <strong>Workflow Builder</strong>. Click <strong>New Workflow</strong>.</p>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">2</div>
+      <div class="setup-content">
+        <h4>Set the Trigger</h4>
+        <p>Choose <strong>"When a message matches a search"</strong> as the trigger type. Set the channel to <strong>#fresha_team</strong>. Add keyword: <strong>FEATURE ANNOUNCEMENT</strong>.</p>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">3</div>
+      <div class="setup-content">
+        <h4>Add a "Send a message" step</h4>
+        <p>Choose your QA channel (e.g. <strong>#qa-scenarios</strong>) as the destination. Use this message template:</p>
+        <div class="code-snippet">🧪 New feature announcement detected in #fresha_team!
+
+*Feature:* {{message.text | truncate: 80}}
+*Posted by:* {{message.sender}}
+
+→ Open QA Generator: https://claude.ai/... 
+
+React with ✅ once scenarios are saved to Notion.</div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">4</div>
+      <div class="setup-content">
+        <h4>Replace the link</h4>
+        <p>Swap the placeholder URL with the actual link to this tool. You can bookmark this Claude conversation or save the downloaded HTML file to a shared location.</p>
+      </div>
+    </div>
+
+    <div class="setup-step" style="margin-bottom:0">
+      <div class="setup-num">5</div>
+      <div class="setup-content">
+        <h4>Publish & test</h4>
+        <p>Click <strong>Publish</strong>. Post a test message containing "FEATURE ANNOUNCEMENT" in the channel to verify the notification fires.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="section-label">Pipeline log</div>
+<div class="log-panel" id="logPanel">
+  <div class="log-entry"><span class="log-time">--:--:--</span><span class="log-info">Waiting...</span></div>
+</div>
+
+<div id="resultsSection" style="display:none;">
+  <div class="summary-bar">
+    <div>
+      <span id="summaryCount">0 scenarios</span>
+      <p id="summaryStatus">generating...</p>
+    </div>
+    <div style="font-size:22px" id="summaryEmoji">⏳</div>
+  </div>
+
+  <div id="resourceBar" style="display:none; flex-direction:column; gap:6px; background:rgba(123,97,255,0.07); border:1px solid rgba(123,97,255,0.2); border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+    <div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent2); font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:2px;">🔗 Resources extracted from announcement</div>
+    <div id="resourceLinks" style="display:flex; flex-direction:column; gap:4px;"></div>
+  </div>
+
+  <div class="scenarios-list" id="scenariosList"></div>
+  <div style="margin-top:14px;">
+    <button class="btn btn-sm" onclick="resetResults()" style="width:100%">↩ Clear results</button>
+  </div>
+</div>
+
+<script>
+let selectedAnnouncement = null;
+let fetchedAnnouncements = [];
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['fetch','manual','setup'][i] === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function ts() { return new Date().toLocaleTimeString('en-GB', { hour12: false }); }
+
+function log(msg, type = 'info') {
+  const panel = document.getElementById('logPanel');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-time">${ts()}</span><span class="log-${type}">${msg}</span>`;
+  panel.appendChild(entry);
+  panel.scrollTop = panel.scrollHeight;
+}
+
+async function callClaude(messages, systemPrompt, mcpServers = []) {
+  const body = { model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: systemPrompt, messages };
+  if (mcpServers.length) body.mcp_servers = mcpServers;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+async function fetchAnnouncements() {
+  const channel = document.getElementById('slackChannel').value.trim() || 'fresha_team';
+  const queue = document.getElementById('announcementQueue');
+  queue.innerHTML = '<div class="empty-queue">⏳ Fetching from Slack...</div>';
+  log(`→ Fetching messages from #${channel}...`, 'info');
+
+  const system = `You are a Slack assistant. Search the channel "${channel}" for messages containing "FEATURE ANNOUNCEMENT". 
+Return ONLY a JSON array of matches — no markdown, no preamble:
+[{"text": "full message text", "ts": "timestamp string", "user": "username or display name", "feature": "extracted feature name"}]
+Return an empty array [] if none found. Maximum 5 most recent.`;
+
+  try {
+    const data = await callClaude(
+      [{ role: 'user', content: `Find feature announcement messages in #${channel}` }],
+      system,
+      [{ type: 'url', url: 'https://mcp.slack.com/mcp', name: 'slack-mcp' }]
+    );
+
+    // Try to extract from tool results first
+    let announcements = [];
+    const toolResults = data.content?.filter(b => b.type === 'mcp_tool_result') || [];
+    const textBlocks = data.content?.filter(b => b.type === 'text') || [];
+
+    // Try parsing text response as JSON
+    for (const block of textBlocks) {
+      const clean = (block.text || '').replace(/```json|```/g, '').trim();
+      try {
+        const parsed = JSON.parse(clean);
+        if (Array.isArray(parsed)) { announcements = parsed; break; }
+      } catch {}
+    }
+
+    // Fallback: try to extract from Slack messages in tool results
+    if (!announcements.length) {
+      for (const r of toolResults) {
+        const raw = r.content?.[0]?.text || '';
+        try {
+          const parsed = JSON.parse(raw);
+          const messages = parsed.messages || parsed.ok && parsed.messages || [];
+          for (const m of messages) {
+            if ((m.text || '').toUpperCase().includes('FEATURE ANNOUNCEMENT')) {
+              const featureMatch = m.text.match(/Feature:\s*([^\n]+)/i);
+              announcements.push({
+                text: m.text,
+                ts: m.ts,
+                user: m.username || m.user || 'Unknown',
+                feature: featureMatch ? featureMatch[1].trim() : 'Feature Announcement'
+              });
+            }
+          }
+        } catch {}
+      }
+    }
+
+    fetchedAnnouncements = announcements;
+    renderQueue(announcements);
+
+    if (announcements.length) {
+      log(`✓ Found ${announcements.length} feature announcement(s)`, 'ok');
+    } else {
+      log('⚠ No feature announcements found in recent messages', 'warn');
+    }
+  } catch (e) {
+    log(`✗ Slack fetch error: ${e.message}`, 'err');
+    queue.innerHTML = '<div class="empty-queue">✗ Could not fetch from Slack. Check your connection.</div>';
+  }
+}
+
+function renderQueue(announcements) {
+  const queue = document.getElementById('announcementQueue');
+  if (!announcements.length) {
+    queue.innerHTML = '<div class="empty-queue">No feature announcements found in recent messages.</div>';
+    document.getElementById('generateBtn').disabled = true;
+    return;
+  }
+  queue.innerHTML = '';
+  announcements.forEach((ann, i) => {
+    const item = document.createElement('div');
+    item.className = 'announcement-item';
+    item.id = `ann-${i}`;
+    const preview = ann.text.replace(/\*/g, '').replace(/\n/g, ' ').slice(0, 120);
+    item.innerHTML = `
+      <div class="ann-badge new">NEW</div>
+      <div class="ann-header">
+        <div class="ann-feature">${ann.feature || 'Feature Announcement'}</div>
+        <div class="ann-time">${ann.ts ? new Date(parseFloat(ann.ts) * 1000).toLocaleString('en-GB', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'recent'}</div>
+      </div>
+      <div class="ann-preview">${preview}...</div>
+      <div class="select-indicator"></div>
+    `;
+    item.onclick = () => selectAnnouncement(i, item);
+    queue.appendChild(item);
+  });
+}
+
+function selectAnnouncement(i, el) {
+  document.querySelectorAll('.announcement-item').forEach(a => a.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedAnnouncement = fetchedAnnouncements[i];
+  document.getElementById('generateBtn').disabled = false;
+}
+
+async function generateScenarios(text, featureTag) {
+  const system = `You are a senior QA engineer for Fresha, a salon & spa booking platform. Given a feature announcement, generate comprehensive QA test scenarios.
+Respond ONLY with valid JSON, no markdown:
+{
+  "feature_name": "short name",
+  "resource_links": ["any URLs found in the announcement text, e.g. Loom, screenshots, docs — empty array if none"],
+  "scenarios": [
+    {
+      "title": "concise scenario title as it would appear in a QA database",
+      "type": "functional|edge_case|regression|ux|performance",
+      "priority": "high|medium|low",
+      "description": "Given [context], when [action], then [expected outcome]",
+      "navigation": "App section > Sub-section > Action (e.g. Point of Sale > Add to Cart > Select product)",
+      "notes": "Additional instructions a freelance tester needs: specific UI elements to check, known edge cases, error states to watch for, dependencies on other scenarios (e.g. 'Note: Online bookings must be activated first'). Write as plain sentences or numbered steps if multi-part.",
+      "steps": ["Step 1", "Step 2", "Step 3"]
+    }
+  ]
+}
+Generate 6–8 scenarios. Extract any URLs from the announcement text into resource_links.`;
+
+  const data = await callClaude(
+    [{ role: 'user', content: `Feature area: ${featureTag}\n\nAnnouncement:\n${text}` }],
+    system
+  );
+
+  const textContent = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
+  const clean = textContent.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
+
+  const data = await callClaude(
+    [{ role: 'user', content: `Feature area: ${featureTag}\n\nAnnouncement:\n${text}` }],
+    system
+  );
+
+  const textContent = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
+  const clean = textContent.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
+
+async function createNotionScenario(dbId, scenario, featureName, featureTag, resourceLinks) {
+  const resourceText = resourceLinks && resourceLinks.length
+    ? resourceLinks.join('\n')
+    : '';
+
+  const system = `You are a Notion assistant. Use the create-pages tool to create a page in the "fresha partner scenarios" database.
+
+Set these properties using the EXACT property names as they appear in the database:
+- "Testing scenario" (title): "${scenario.title}"
+- "Feature / Area": "New features"  ← always this exact value
+- "Navigation": "${scenario.navigation || ''}"
+- "Other resources": "${resourceText}" ← paste any URLs here if the property supports rich text or URL type
+- "Notes": leave blank as a property — the notes go in the page body below
+
+Body content:
+**Feature:** ${featureName}
+**Priority:** ${scenario.priority} | **Type:** ${scenario.type}
+
+**Description:**
+${scenario.description}
+
+**Notes:**
+${scenario.notes || ''}
+
+**Test Steps:**
+${scenario.steps.map((s,i)=>`${i+1}. ${s}`).join('\n')}
+
+${resourceText ? `**Other resources:**\n${resourceText}` : ''}
+
+After creating the page, respond with ONLY the page URL on a single line.`;
+
+  const data = await callClaude(
+    [{ role: 'user', content: `Create Notion QA scenario page: ${scenario.title}` }],
+    system,
+    [{ type: 'url', url: 'https://mcp.notion.com/mcp', name: 'notion-mcp' }]
+  );
+
+  const toolResults = data.content?.filter(b => b.type === 'mcp_tool_result') || [];
+  for (const r of toolResults) {
+    try {
+      const p = JSON.parse(r.content?.[0]?.text || '');
+      if (p.url) return { url: p.url };
+      if (p.id) return { url: `https://notion.so/${p.id.replace(/-/g,'')}` };
+    } catch {}
+  }
+  const textContent = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
+  const urlMatch = textContent.match(/https:\/\/(?:www\.)?notion\.so\/[^\s)>\n]+/);
+  if (urlMatch) return { url: urlMatch[0] };
+  const uuidMatch = textContent.match(/[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}/i);
+  if (uuidMatch) return { url: `https://notion.so/${uuidMatch[0].replace(/-/g,'')}` };
+  return { url: null };
+}
+
+  const data = await callClaude(
+    [{ role: 'user', content: `Create Notion QA scenario page: ${scenario.title}` }],
+    system,
+    [{ type: 'url', url: 'https://mcp.notion.com/mcp', name: 'notion-mcp' }]
+  );
+
+  const toolResults = data.content?.filter(b => b.type === 'mcp_tool_result') || [];
+  for (const r of toolResults) {
+    try {
+      const p = JSON.parse(r.content?.[0]?.text || '');
+      if (p.url) return { url: p.url };
+      if (p.id) return { url: `https://notion.so/${p.id.replace(/-/g,'')}` };
+    } catch {}
+  }
+  const textContent = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
+  const urlMatch = textContent.match(/https:\/\/(?:www\.)?notion\.so\/[^\s)>\n]+/);
+  if (urlMatch) return { url: urlMatch[0] };
+  const uuidMatch = textContent.match(/[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}/i);
+  if (uuidMatch) return { url: `https://notion.so/${uuidMatch[0].replace(/-/g,'')}` };
+  return { url: null };
+}
+
+async function runPipeline() {
+  if (!selectedAnnouncement) return;
+  await executePipeline(selectedAnnouncement.text, document.getElementById('dbName').value, document.getElementById('featureTag').value);
+  // Mark as processed
+  const selected = document.querySelector('.announcement-item.selected');
+  if (selected) { selected.classList.add('processed'); selected.querySelector('.ann-badge').textContent = 'DONE'; selected.querySelector('.ann-badge').className = 'ann-badge done'; }
+  selectedAnnouncement = null;
+  document.getElementById('generateBtn').disabled = true;
+}
+
+async function runPipelineManual() {
+  const text = document.getElementById('announcementText').value.trim();
+  if (!text) { log('⚠ Paste an announcement first', 'warn'); return; }
+  await executePipeline(text, document.getElementById('dbName2').value, document.getElementById('featureTag2').value);
+}
+
+async function executePipeline(text, dbName, featureTag) {
+  const btn = document.getElementById('generateBtn');
+  const btn2 = document.getElementById('generateBtn2');
+  [btn, btn2].forEach(b => { if(b) { b.disabled = true; b.textContent = '⏳ Running...'; }});
+
+  document.getElementById('scenariosList').innerHTML = '';
+  document.getElementById('resultsSection').style.display = 'none';
+  document.getElementById('logPanel').innerHTML = '';
+
+  try {
+    log('→ Generating QA scenarios...', 'info');
+    let parsed;
+    try {
+      parsed = await generateScenarios(text, featureTag);
+      log(`✓ Generated ${parsed.scenarios.length} scenarios for "${parsed.feature_name}"`, 'ok');
+    } catch(e) { log(`✗ Generation failed: ${e.message}`, 'err'); throw e; }
+
+    document.getElementById('resultsSection').style.display = 'block';
+    document.getElementById('summaryCount').textContent = `${parsed.scenarios.length} scenarios`;
+    document.getElementById('summaryStatus').textContent = 'saving to notion...';
+    document.getElementById('summaryEmoji').textContent = '💾';
+
+    // Show extracted resource links if any
+    const resourceLinks = parsed.resource_links || [];
+    const resourceBar = document.getElementById('resourceBar');
+    if (resourceLinks.length) {
+      resourceBar.style.display = 'flex';
+      document.getElementById('resourceLinks').innerHTML = resourceLinks
+        .map(url => `<a href="${url}" target="_blank" rel="noopener" style="color:var(--accent2); font-family:'JetBrains Mono',monospace; font-size:11px; word-break:break-all;">${url}</a>`)
+        .join('');
+    } else {
+      resourceBar.style.display = 'none';
+    }
+
+    parsed.scenarios.forEach((s,i) => renderScenarioCard(s,i));
+
+    log(`→ Saving to Notion database "${dbName}"...`, 'info');
+    let saved = 0, failed = 0;
+
+    for (let i = 0; i < parsed.scenarios.length; i++) {
+      const s = parsed.scenarios[i];
+      updateStatus(i, 'saving');
+      log(`→ Saving: "${s.title}"...`, 'info');
+      try {
+        const result = await createNotionScenario(null, s, parsed.feature_name, featureTag, parsed.resource_links || []);
+        updateStatus(i, 'saved', result.url); saved++;
+        log(`✓ Saved: "${s.title}"${result.url ? ' → ' + result.url : ''}`, 'ok');
+      } catch(e) {
+        updateStatus(i, 'failed', null); failed++;
+        log(`✗ Failed: "${s.title}" — ${e.message}`, 'err');
+      }
+    }
+
+    document.getElementById('summaryCount').textContent = `${saved}/${parsed.scenarios.length} saved`;
+    document.getElementById('summaryStatus').textContent = failed ? `${failed} failed — check log` : 'all saved to notion ✓';
+    document.getElementById('summaryEmoji').textContent = failed ? '⚠️' : '✅';
+    log(`─── Done: ${saved} saved, ${failed} failed ───`, saved === parsed.scenarios.length ? 'ok' : 'warn');
+  } catch(e) {
+    log(`✗ Pipeline error: ${e.message}`, 'err');
+  } finally {
+    if(btn) { btn.disabled = false; btn.textContent = '✨ Generate & Save Selected to Notion'; }
+    if(btn2) { btn2.disabled = false; btn2.textContent = '✨ Generate & Save to Notion'; }
+  }
+}
+
+function renderScenarioCard(s, i) {
+  const list = document.getElementById('scenariosList');
+  const card = document.createElement('div');
+  card.className = 'scenario-card'; card.id = `sc-${i}`;
+  card.innerHTML = `
+    <div class="scenario-header">
+      <div class="scenario-title">${s.title}</div>
+      <span class="scenario-status status-pending" id="sc-status-${i}">PENDING</span>
+    </div>
+    <div class="scenario-meta">
+      <span class="tag priority-${s.priority}">${s.priority.toUpperCase()}</span>
+      <span class="tag">${s.type}</span>
+      <span class="tag tag-new-features">🏷 New features</span>
+    </div>
+    ${s.navigation ? `<div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--text3); margin-bottom:6px;">📍 ${s.navigation}</div>` : ''}
+    <div class="scenario-desc">${s.description}</div>
+    ${s.notes ? `<div style="margin-top:8px; padding:8px 10px; background:rgba(255,209,102,0.06); border-left:2px solid rgba(255,209,102,0.4); border-radius:0 6px 6px 0; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--text2); line-height:1.6;"><span style="color:var(--warning); font-weight:700;">NOTES</span> ${s.notes}</div>` : ''}
+    <div id="sc-link-${i}" style="display:none; margin-top:8px;">
+      <a id="sc-link-anchor-${i}" href="#" target="_blank" rel="noopener" style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent2); text-decoration:none; display:inline-flex; align-items:center; gap:4px; padding:4px 10px; background:rgba(123,97,255,0.1); border:1px solid rgba(123,97,255,0.25); border-radius:6px;">↗ Open in Notion</a>
+    </div>`;
+  list.appendChild(card);
+}
+
+function updateStatus(i, status, notionUrl) {
+  const card = document.getElementById(`sc-${i}`);
+  const el = document.getElementById(`sc-status-${i}`);
+  if (!card || !el) return;
+  const map = { saving:['status-saving','SAVING...'], saved:['status-saved','SAVED ✓'], failed:['status-failed','FAILED ✗'] };
+  const [cls, label] = map[status] || ['status-pending','PENDING'];
+  el.className = `scenario-status ${cls}`; el.textContent = label;
+  if (status === 'saved') {
+    card.classList.add('saved');
+    if (notionUrl) {
+      const linkWrap = document.getElementById(`sc-link-${i}`);
+      const anchor = document.getElementById(`sc-link-anchor-${i}`);
+      if (linkWrap && anchor) { anchor.href = notionUrl; linkWrap.style.display = 'block'; }
+    }
+  }
+  if (status === 'failed') card.classList.add('failed');
+}
+
+function resetResults() {
+  document.getElementById('scenariosList').innerHTML = '';
+  document.getElementById('resultsSection').style.display = 'none';
+  document.getElementById('logPanel').innerHTML = '<div class="log-entry"><span class="log-time">--:--:--</span><span class="log-info">Waiting...</span></div>';
+}
+</script>
+</body>
+</html>
