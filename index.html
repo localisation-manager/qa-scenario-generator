@@ -9,292 +9,185 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #0d0f14; --surface: #13161e; --surface2: #1a1e28; --border: #262b3a;
-    --border2: #2e3447; --accent: #4fffb0; --accent2: #7b61ff; --accent3: #ff6b6b;
+    --border2: #2e3447; --accent: #4fffb0; --accent2: #7b61ff;
     --text: #e8eaf0; --text2: #8a90a4; --text3: #555d75;
     --warning: #ffd166; --error: #ff6b6b;
   }
   body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 28px 22px; }
-
-  .header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 28px; }
+  .header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
   .logo-mark { width: 44px; height: 44px; background: linear-gradient(135deg, var(--accent2), var(--accent)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
   .header-text h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
   .header-text p { font-size: 12px; color: var(--text2); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
-
-  .integrations { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+  .badges { display: flex; gap: 8px; margin-bottom: 20px; }
   .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; text-transform: uppercase; }
   .badge-notion { background: rgba(123,97,255,0.15); color: var(--accent2); border: 1px solid rgba(123,97,255,0.3); }
-  .badge-slack  { background: rgba(79,255,176,0.1); color: var(--accent); border: 1px solid rgba(79,255,176,0.25); }
-
-  .api-key-bar { display: flex; gap: 8px; align-items: flex-end; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; }
-  .api-key-bar .input-group { flex: 1; }
-  .api-key-bar label { display: block; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text2); margin-bottom: 5px; letter-spacing: 0.5px; }
-  .api-key-bar input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; padding: 9px 12px; outline: none; transition: border-color 0.2s; }
-  .api-key-bar input:focus { border-color: var(--accent2); }
-  .api-key-bar input::placeholder { color: var(--text3); }
-  .api-key-status { font-size: 11px; font-family: 'JetBrains Mono', monospace; white-space: nowrap; padding: 9px 0 0; }
-  .api-key-status.ok { color: var(--accent); }
-  .api-key-status.missing { color: var(--error); }
-
-  .section-label { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
-
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
-  .card-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-
-  /* TABS */
+  .badge-slack  { background: rgba(79,255,176,0.1);  color: var(--accent);  border: 1px solid rgba(79,255,176,0.25); }
+  .keys-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 20px; }
+  .keys-header { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+  .key-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .key-row:last-child { margin-bottom: 0; }
+  .key-label { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text2); width: 160px; flex-shrink: 0; }
+  .key-row input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 8px 10px; outline: none; }
+  .key-row input:focus { border-color: var(--accent2); }
+  .key-row input::placeholder { color: var(--text3); }
+  .key-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border2); flex-shrink: 0; }
+  .key-dot.ok { background: var(--accent); }
   .tabs { display: flex; gap: 2px; background: var(--surface2); border-radius: 10px; padding: 3px; margin-bottom: 20px; }
   .tab { flex: 1; text-align: center; padding: 9px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--text2); transition: all 0.2s; border: none; background: none; font-family: 'Syne', sans-serif; }
   .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
-
-  /* SLACK FETCH */
-  .channel-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 14px; }
-  .channel-row .input-group { flex: 1; }
-  .input-group label { display: block; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text2); margin-bottom: 5px; }
-  input[type="text"] { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; padding: 9px 12px; outline: none; transition: border-color 0.2s; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  .card-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+  label { display: block; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text2); margin-bottom: 5px; }
+  input[type="text"] { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; padding: 9px 12px; outline: none; margin-bottom: 12px; }
   input[type="text"]:focus { border-color: var(--accent2); }
   input[type="text"]::placeholder { color: var(--text3); }
-
-  .announcement-queue { display: flex; flex-direction: column; gap: 10px; }
-  .announcement-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s; position: relative; }
+  textarea { width: 100%; min-height: 160px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; padding: 12px 14px; resize: vertical; outline: none; margin-bottom: 12px; }
+  textarea:focus { border-color: var(--accent2); }
+  textarea::placeholder { color: var(--text3); }
+  .fetch-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; }
+  .fetch-row .fg { flex: 1; }
+  .announcement-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s; position: relative; margin-bottom: 8px; }
   .announcement-item:hover { border-color: var(--accent2); }
   .announcement-item.selected { border-color: var(--accent2); background: rgba(123,97,255,0.08); }
   .announcement-item.processed { opacity: 0.4; pointer-events: none; }
-  .ann-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-  .ann-feature { font-size: 13px; font-weight: 700; color: var(--text); }
-  .ann-time { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text3); flex-shrink: 0; }
+  .ann-feature { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .ann-time { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text3); margin-bottom: 6px; }
   .ann-preview { font-size: 11.5px; color: var(--text2); line-height: 1.5; font-family: 'JetBrains Mono', monospace; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .ann-badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; margin-bottom: 5px; }
-  .ann-badge.new     { background: rgba(79,255,176,0.15); color: var(--accent); border: 1px solid rgba(79,255,176,0.3); }
-  .ann-badge.done    { background: rgba(138,144,164,0.1); color: var(--text3); border: 1px solid var(--border); }
-
-  .select-indicator { position: absolute; top: 14px; right: 14px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 10px; transition: all 0.2s; }
-  .announcement-item.selected .select-indicator { background: var(--accent2); border-color: var(--accent2); }
-  .announcement-item.selected .select-indicator::after { content: '✓'; color: #fff; font-weight: 700; }
-
-  .empty-queue { text-align: center; padding: 32px; color: var(--text3); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-
-  /* MANUAL */
-  textarea { width: 100%; min-height: 150px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; padding: 12px 14px; resize: vertical; outline: none; transition: border-color 0.2s; }
-  textarea:focus { border-color: var(--accent2); }
-  textarea::placeholder { color: var(--text3); }
-
-  .config-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-
-  /* BUTTONS */
-  .btn { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 12px 20px; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; letter-spacing: 0.2px; }
-  .btn-primary { background: linear-gradient(135deg, var(--accent2), #9d85ff); color: #fff; box-shadow: 0 4px 20px rgba(123,97,255,0.3); width: 100%; }
-  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(123,97,255,0.4); }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-sm { padding: 8px 14px; font-size: 12px; border-radius: 8px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+  .ann-badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; margin-bottom: 5px; background: rgba(79,255,176,0.15); color: var(--accent); border: 1px solid rgba(79,255,176,0.3); }
+  .ann-badge.done { background: rgba(138,144,164,0.1); color: var(--text3); border: 1px solid var(--border); }
+  .select-dot { position: absolute; top: 14px; right: 14px; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border2); }
+  .announcement-item.selected .select-dot { background: var(--accent2); border-color: var(--accent2); }
+  .empty-state { text-align: center; padding: 28px; color: var(--text3); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 12px 20px; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; width: 100%; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent2), #9d85ff); color: #fff; box-shadow: 0 4px 20px rgba(123,97,255,0.3); margin-bottom: 16px; }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+  .btn-sm { padding: 8px 14px; font-size: 12px; border-radius: 8px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); width: auto; }
   .btn-sm:hover { background: var(--border); color: var(--text); }
-  .btn-accent { background: rgba(79,255,176,0.1); color: var(--accent); border: 1px solid rgba(79,255,176,0.3); }
-  .btn-accent:hover { background: rgba(79,255,176,0.18); }
-
-  /* LOG */
-  .log-panel { background: #0a0c10; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; min-height: 70px; max-height: 180px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.8; margin-bottom: 18px; }
+  .btn-green { background: rgba(79,255,176,0.1); color: var(--accent); border: 1px solid rgba(79,255,176,0.3); width: auto; padding: 8px 16px; font-size: 12px; border-radius: 8px; font-family: 'Syne', sans-serif; font-weight: 700; cursor: pointer; }
+  .btn-green:hover { background: rgba(79,255,176,0.18); }
+  .log-panel { background: #0a0c10; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; min-height: 60px; max-height: 160px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.8; margin-bottom: 16px; }
   .log-entry { display: flex; gap: 10px; }
   .log-time { color: var(--text3); flex-shrink: 0; }
-  .log-ok { color: var(--accent); } .log-err { color: var(--error); } .log-info { color: var(--text2); } .log-warn { color: var(--warning); }
-
-  /* RESULTS */
+  .log-ok   { color: var(--accent); }
+  .log-err  { color: var(--error); }
+  .log-info { color: var(--text2); }
+  .log-warn { color: var(--warning); }
   .summary-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(79,255,176,0.07); border: 1px solid rgba(79,255,176,0.2); border-radius: 10px; margin-bottom: 14px; }
   .summary-bar span { font-size: 13px; font-weight: 700; color: var(--accent); }
   .summary-bar p { font-size: 11px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
-
-  .scenarios-list { display: flex; flex-direction: column; gap: 10px; }
-  .scenario-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; transition: border-color 0.2s; }
-  .scenario-card.saved { border-color: rgba(79,255,176,0.35); }
-  .scenario-card.failed { border-color: rgba(255,107,107,0.35); }
-  .scenario-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
-  .scenario-title { font-size: 13px; font-weight: 700; line-height: 1.4; }
-  .scenario-status { flex-shrink: 0; font-size: 10px; font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border-radius: 100px; font-weight: 600; }
-  .status-pending { background: rgba(138,144,164,0.15); color: var(--text2); }
-  .status-saving  { background: rgba(123,97,255,0.2);   color: var(--accent2); }
-  .status-saved   { background: rgba(79,255,176,0.15);  color: var(--accent); }
-  .status-failed  { background: rgba(255,107,107,0.15); color: var(--error); }
-  .scenario-meta { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 6px; }
+  .scenario-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; transition: border-color 0.2s; }
+  .scenario-card.saved  { border-color: rgba(79,255,176,0.4); }
+  .scenario-card.failed { border-color: rgba(255,107,107,0.4); }
+  .sc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+  .sc-title  { font-size: 13px; font-weight: 700; line-height: 1.4; }
+  .sc-status { flex-shrink: 0; font-size: 10px; font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border-radius: 100px; font-weight: 600; }
+  .s-pending { background: rgba(138,144,164,0.15); color: var(--text2); }
+  .s-saving  { background: rgba(123,97,255,0.2);   color: var(--accent2); }
+  .s-saved   { background: rgba(79,255,176,0.15);  color: var(--accent); }
+  .s-failed  { background: rgba(255,107,107,0.15); color: var(--error); }
+  .sc-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
   .tag { font-size: 10px; font-family: 'JetBrains Mono', monospace; padding: 2px 7px; border-radius: 5px; background: var(--surface); border: 1px solid var(--border); color: var(--text2); }
-  .tag.priority-high   { border-color: rgba(255,107,107,0.4); color: var(--error); }
-  .tag.priority-medium { border-color: rgba(255,209,102,0.4); color: var(--warning); }
-  .tag.priority-low    { border-color: rgba(79,255,176,0.3);  color: var(--accent); }
-  .tag.tag-new-features { border-color: rgba(123,97,255,0.4); color: var(--accent2); background: rgba(123,97,255,0.08); }
-  .scenario-desc { font-size: 12px; color: var(--text2); line-height: 1.5; font-family: 'JetBrains Mono', monospace; }
-
+  .tag.high   { border-color: rgba(255,107,107,0.4); color: var(--error); }
+  .tag.medium { border-color: rgba(255,209,102,0.4); color: var(--warning); }
+  .tag.low    { border-color: rgba(79,255,176,0.3);  color: var(--accent); }
+  .tag.nf     { border-color: rgba(123,97,255,0.4);  color: var(--accent2); background: rgba(123,97,255,0.08); }
+  .sc-nav  { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text3); margin-bottom: 5px; }
+  .sc-desc { font-size: 12px; color: var(--text2); line-height: 1.5; font-family: 'JetBrains Mono', monospace; }
+  .sc-notes { margin-top: 8px; padding: 7px 10px; background: rgba(255,209,102,0.06); border-left: 2px solid rgba(255,209,102,0.4); border-radius: 0 6px 6px 0; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text2); line-height: 1.6; }
+  .sc-link { display: none; margin-top: 8px; }
+  .sc-link a { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent2); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: rgba(123,97,255,0.1); border: 1px solid rgba(123,97,255,0.25); border-radius: 6px; }
   .divider { height: 1px; background: var(--border); margin: 20px 0; }
-
-  /* SETUP GUIDE */
-  .setup-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
-  .setup-step { display: flex; gap: 14px; margin-bottom: 18px; }
-  .setup-num { width: 28px; height: 28px; border-radius: 50%; background: rgba(123,97,255,0.2); border: 1px solid var(--accent2); color: var(--accent2); font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .setup-content h4 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-  .setup-content p { font-size: 12px; color: var(--text2); line-height: 1.5; }
-  .code-snippet { background: #0a0c10; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); margin-top: 7px; }
-
-  .notice { display: flex; gap: 10px; align-items: flex-start; background: rgba(255,209,102,0.07); border: 1px solid rgba(255,209,102,0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
-  .notice-icon { font-size: 16px; flex-shrink: 0; }
-  .notice p { font-size: 12px; color: var(--text2); line-height: 1.5; }
-  .notice strong { color: var(--warning); }
+  .section-label { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="logo-mark">🧪</div>
+  <div class="logo-mark">&#x1F9EA;</div>
   <div class="header-text">
     <h1>QA Scenario Generator</h1>
-    <p>slack announcements → notion scenarios</p>
+    <p>slack announcements &rarr; notion scenarios</p>
   </div>
 </div>
 
-<div class="integrations">
-  <span class="badge badge-slack">● Slack</span>
-  <span class="badge badge-notion">● Notion</span>
+<div class="badges">
+  <span class="badge badge-slack">&#x25CF; Slack</span>
+  <span class="badge badge-notion">&#x25CF; Notion</span>
 </div>
 
-<div class="api-key-bar" style="flex-direction:column; gap:10px;">
-  <div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--text3); letter-spacing:1px; text-transform:uppercase; margin-bottom:2px;">🔑 API Keys — saved in your browser, never shared</div>
-  <div style="display:flex; gap:8px; align-items:center;">
-    <div class="input-group" style="flex:1">
-      <label>ANTHROPIC API KEY</label>
-      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." oninput="saveAllKeys()" />
-    </div>
-    <div class="api-key-status missing" id="apiKeyStatus" style="padding-top:18px;">⚠</div>
+<div class="keys-card">
+  <div class="keys-header">&#x1F511; API Keys &mdash; saved in your browser, never shared</div>
+  <div class="key-row">
+    <span class="key-label">Anthropic API Key</span>
+    <input type="password" id="keyAnthropic" placeholder="sk-ant-..." oninput="saveKeys()" />
+    <div class="key-dot" id="dotAnthropic"></div>
   </div>
-  <div style="display:flex; gap:8px; align-items:center;">
-    <div class="input-group" style="flex:1">
-      <label>SLACK BOT TOKEN</label>
-      <input type="password" id="slackTokenInput" placeholder="xoxb-..." oninput="saveAllKeys()" />
-    </div>
-    <div class="api-key-status missing" id="slackTokenStatus" style="padding-top:18px;">⚠</div>
+  <div class="key-row">
+    <span class="key-label">Slack Bot Token</span>
+    <input type="password" id="keySlack" placeholder="xoxb-..." oninput="saveKeys()" />
+    <div class="key-dot" id="dotSlack"></div>
   </div>
-  <div style="display:flex; gap:8px; align-items:center;">
-    <div class="input-group" style="flex:1">
-      <label>NOTION INTEGRATION TOKEN</label>
-      <input type="password" id="notionTokenInput" placeholder="ntn_..." oninput="saveAllKeys()" />
-    </div>
-    <div class="api-key-status missing" id="notionTokenStatus" style="padding-top:18px;">⚠</div>
+  <div class="key-row">
+    <span class="key-label">Notion Token</span>
+    <input type="password" id="keyNotion" placeholder="ntn_..." oninput="saveKeys()" />
+    <div class="key-dot" id="dotNotion"></div>
   </div>
 </div>
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('fetch')">📡 Fetch from Slack</button>
-  <button class="tab" onclick="switchTab('manual')">✏️ Manual</button>
-  <button class="tab" onclick="switchTab('setup')">⚙️ Workflow Setup</button>
+  <button class="tab active" onclick="switchTab('fetch')">&#x1F4E1; Fetch from Slack</button>
+  <button class="tab"        onclick="switchTab('manual')">&#x270F;&#xFE0F; Manual</button>
+  <button class="tab"        onclick="switchTab('setup')">&#x2699;&#xFE0F; Workflow Setup</button>
 </div>
 
-<!-- TAB: FETCH FROM SLACK -->
 <div class="tab-panel active" id="tab-fetch">
   <div class="card">
-    <div class="card-title">📡 Pull Announcements from Slack</div>
-
-    <div class="channel-row">
-      <div class="input-group">
-        <label>SLACK CHANNEL ID <span style="color:var(--text3);font-weight:400;">(right-click channel in Slack → Copy link → last part of URL)</span></label>
-        <input type="text" id="slackChannel" value="" placeholder="e.g. C0123ABCDEF" />
+    <div class="card-title">&#x1F4E1; Pull Announcements from Slack</div>
+    <div class="fetch-row">
+      <div class="fg">
+        <label>SLACK CHANNEL ID &nbsp;<span style="color:var(--text3);font-weight:400;">(right-click channel in Slack &rarr; Copy link &rarr; last part of URL)</span></label>
+        <input type="text" id="slackChannelId" placeholder="e.g. C08ANPNMV86S" style="margin-bottom:0" />
       </div>
-      <button class="btn btn-sm btn-accent" onclick="fetchAnnouncements()">↻ Fetch</button>
+      <button class="btn-green" onclick="fetchAnnouncements()">&#x21BB; Fetch</button>
     </div>
-
-    <div class="config-row" style="margin-top:0; margin-bottom:14px;">
-      <div class="input-group">
-        <label>NOTION DATABASE</label>
-        <input type="text" id="dbName" value="fresha partner scenarios" />
-      </div>
-      <div class="input-group">
-      </div>
+    <div style="margin-top:12px;">
+      <label>NOTION DATABASE</label>
+      <input type="text" id="dbName" value="fresha partner scenarios" />
     </div>
-
-    <div class="section-label" style="margin-bottom:8px">Unprocessed announcements</div>
-    <div id="announcementQueue">
-      <div class="empty-queue">Click "↻ Fetch" to load announcements from Slack</div>
-    </div>
+    <div class="section-label" style="margin-top:4px;">Unprocessed announcements</div>
+    <div id="fetchQueue"><div class="empty-state">Click &#x21BB; Fetch to load announcements from Slack</div></div>
   </div>
-
-  <button class="btn btn-primary" id="generateBtn" onclick="runPipeline()" disabled>
-    ✨ Generate & Save Selected to Notion
-  </button>
+  <button class="btn btn-primary" id="fetchGenerateBtn" onclick="runPipelineFetch()" disabled>&#x2728; Generate &amp; Save Selected to Notion</button>
 </div>
 
-<!-- TAB: MANUAL -->
 <div class="tab-panel" id="tab-manual">
   <div class="card">
-    <div class="card-title">✏️ Manual Input</div>
-    <textarea id="announcementText" placeholder="Paste a feature announcement here..."></textarea>
-    <div class="config-row">
-      <div class="input-group">
-        <label>NOTION DATABASE</label>
-        <input type="text" id="dbName2" value="fresha partner scenarios" />
-      </div>
-      <div class="input-group">
-      </div>
-    </div>
+    <div class="card-title">&#x270F;&#xFE0F; Manual Input</div>
+    <label>PASTE ANNOUNCEMENT</label>
+    <textarea id="manualText" placeholder="Paste the feature announcement here..."></textarea>
+    <label>NOTION DATABASE</label>
+    <input type="text" id="dbName2" value="fresha partner scenarios" />
   </div>
-  <button class="btn btn-primary" id="generateBtn2" onclick="runPipelineManual()">✨ Generate & Save to Notion</button>
+  <button class="btn btn-primary" id="manualGenerateBtn" onclick="runPipelineManual()">&#x2728; Generate &amp; Save to Notion</button>
 </div>
 
-<!-- TAB: SETUP GUIDE -->
 <div class="tab-panel" id="tab-setup">
-  <div class="notice">
-    <div class="notice-icon">💡</div>
-    <p>Set up a <strong>Slack Workflow</strong> to automatically ping your QA team every time a feature announcement is posted — with a direct link to this tool.</p>
-  </div>
-
-  <div class="setup-card">
-    <div class="section-label" style="margin-bottom:16px">Slack Workflow Builder — Step by Step</div>
-
-    <div class="setup-step">
-      <div class="setup-num">1</div>
-      <div class="setup-content">
-        <h4>Open Workflow Builder</h4>
-        <p>In Slack, click your workspace name → <strong>Tools & settings</strong> → <strong>Workflow Builder</strong>. Click <strong>New Workflow</strong>.</p>
-      </div>
-    </div>
-
-    <div class="setup-step">
-      <div class="setup-num">2</div>
-      <div class="setup-content">
-        <h4>Set the Trigger</h4>
-        <p>Choose <strong>"When a message matches a search"</strong> as the trigger type. Set the channel to <strong>#fresha_team</strong>. Add keyword: <strong>FEATURE ANNOUNCEMENT</strong>.</p>
-      </div>
-    </div>
-
-    <div class="setup-step">
-      <div class="setup-num">3</div>
-      <div class="setup-content">
-        <h4>Add a "Send a message" step</h4>
-        <p>Choose your QA channel (e.g. <strong>#qa-scenarios</strong>) as the destination. Use this message template:</p>
-        <div class="code-snippet">🧪 New feature announcement detected in #fresha_team!
-
-*Feature:* {{message.text | truncate: 80}}
-*Posted by:* {{message.sender}}
-
-→ Open QA Generator: https://claude.ai/... 
-
-React with ✅ once scenarios are saved to Notion.</div>
-      </div>
-    </div>
-
-    <div class="setup-step">
-      <div class="setup-num">4</div>
-      <div class="setup-content">
-        <h4>Replace the link</h4>
-        <p>Swap the placeholder URL with the actual link to this tool. You can bookmark this Claude conversation or save the downloaded HTML file to a shared location.</p>
-      </div>
-    </div>
-
-    <div class="setup-step" style="margin-bottom:0">
-      <div class="setup-num">5</div>
-      <div class="setup-content">
-        <h4>Publish & test</h4>
-        <p>Click <strong>Publish</strong>. Post a test message containing "FEATURE ANNOUNCEMENT" in the channel to verify the notification fires.</p>
-      </div>
+  <div class="card">
+    <div class="card-title">&#x2699;&#xFE0F; Slack Workflow Setup</div>
+    <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:14px;">Set up a Slack Workflow to automatically notify your QA channel when a feature announcement is posted.</p>
+    <div style="font-size:13px;color:var(--text2);line-height:2;">
+      <p><strong style="color:var(--text)">1.</strong> In Slack: workspace name &rarr; <strong style="color:var(--text)">Tools &amp; settings</strong> &rarr; <strong style="color:var(--text)">Workflow Builder</strong> &rarr; <strong style="color:var(--text)">New Workflow</strong></p>
+      <p><strong style="color:var(--text)">2.</strong> Trigger: <strong style="color:var(--text)">When a message is posted with keywords</strong> &rarr; channel: <strong style="color:var(--text)">#test_l10n_qa</strong> &rarr; keyword: <strong style="color:var(--text)">FEATURE ANNOUNCEMENT</strong></p>
+      <p><strong style="color:var(--text)">3.</strong> Add step: <strong style="color:var(--text)">Send a message</strong> to your QA channel with a link to this tool</p>
+      <p><strong style="color:var(--text)">4.</strong> Publish and test</p>
     </div>
   </div>
 </div>
 
 <div class="divider"></div>
-
 <div class="section-label">Pipeline log</div>
 <div class="log-panel" id="logPanel">
   <div class="log-entry"><span class="log-time">--:--:--</span><span class="log-info">Waiting...</span></div>
@@ -302,416 +195,223 @@ React with ✅ once scenarios are saved to Notion.</div>
 
 <div id="resultsSection" style="display:none;">
   <div class="summary-bar">
-    <div>
-      <span id="summaryCount">0 scenarios</span>
-      <p id="summaryStatus">generating...</p>
-    </div>
-    <div style="font-size:22px" id="summaryEmoji">⏳</div>
+    <div><span id="summaryCount">0 scenarios</span><p id="summaryStatus">generating...</p></div>
+    <div style="font-size:22px" id="summaryEmoji">&#x23F3;</div>
   </div>
-
-  <div id="resourceBar" style="display:none; flex-direction:column; gap:6px; background:rgba(123,97,255,0.07); border:1px solid rgba(123,97,255,0.2); border-radius:10px; padding:12px 14px; margin-bottom:14px;">
-    <div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent2); font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:2px;">🔗 Resources extracted from announcement</div>
-    <div id="resourceLinks" style="display:flex; flex-direction:column; gap:4px;"></div>
+  <div id="resourceBar" style="display:none;flex-direction:column;gap:6px;background:rgba(123,97,255,0.07);border:1px solid rgba(123,97,255,0.2);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+    <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--accent2);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">&#x1F517; Resources from announcement</div>
+    <div id="resourceLinks" style="display:flex;flex-direction:column;gap:4px;"></div>
   </div>
-
-  <div class="scenarios-list" id="scenariosList"></div>
-  <div style="margin-top:14px;">
-    <button class="btn btn-sm" onclick="resetResults()" style="width:100%">↩ Clear results</button>
-  </div>
+  <div id="scenariosList"></div>
+  <button class="btn btn-sm" onclick="resetResults()" style="width:100%;margin-top:8px;">&#x21A9; Clear results</button>
 </div>
 
 <script>
-let selectedAnnouncement = null;
-let fetchedAnnouncements = [];
+var selectedAnnouncement = null;
+var fetchedAnnouncements = [];
 
-// Load saved API key on startup
-window.addEventListener('DOMContentLoaded', () => {
-  const keys = ['anthropic_api_key','slack_bot_token','notion_token'];
-  const ids  = ['apiKeyInput','slackTokenInput','notionTokenInput'];
-  keys.forEach((k,i) => {
-    const v = localStorage.getItem(k);
-    if (v) { document.getElementById(ids[i]).value = v; }
+window.addEventListener('DOMContentLoaded', function() {
+  [['keyAnthropic','anthropic_api_key'],['keySlack','slack_bot_token'],['keyNotion','notion_token']].forEach(function(p){
+    var v = localStorage.getItem(p[1]); if(v) document.getElementById(p[0]).value = v;
   });
-  saveAllKeys();
+  saveKeys();
 });
 
-function setStatus(elId, ok) {
-  const el = document.getElementById(elId);
-  el.textContent = ok ? '✓' : '⚠';
-  el.className = 'api-key-status ' + (ok ? 'ok' : 'missing');
+function saveKeys() {
+  [['keyAnthropic','anthropic_api_key','dotAnthropic'],['keySlack','slack_bot_token','dotSlack'],['keyNotion','notion_token','dotNotion']].forEach(function(r){
+    var v = document.getElementById(r[0]).value.trim();
+    if(v.length > 20) localStorage.setItem(r[1], v);
+    document.getElementById(r[2]).className = 'key-dot' + (v.length > 20 ? ' ok' : '');
+  });
 }
-
-function saveAllKeys() {
-  const ak = document.getElementById('apiKeyInput').value.trim();
-  const st = document.getElementById('slackTokenInput').value.trim();
-  const nt = document.getElementById('notionTokenInput').value.trim();
-  if (ak.length > 20) localStorage.setItem('anthropic_api_key', ak);
-  if (st.length > 20) localStorage.setItem('slack_bot_token', st);
-  if (nt.length > 20) localStorage.setItem('notion_token', nt);
-  setStatus('apiKeyStatus',     ak.length > 20);
-  setStatus('slackTokenStatus', st.length > 20);
-  setStatus('notionTokenStatus',nt.length > 20);
-}
+function getKey(n) { return localStorage.getItem(n) || ''; }
 
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['fetch','manual','setup'][i] === name));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+  ['fetch','manual','setup'].forEach(function(n,i){ document.querySelectorAll('.tab')[i].classList.toggle('active', n===name); });
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('tab-'+name).classList.add('active');
 }
 
-function getKey(name) {
-  return localStorage.getItem(name) || '';
+function ts() { return new Date().toLocaleTimeString('en-GB',{hour12:false}); }
+function log(msg, type) {
+  var p = document.getElementById('logPanel');
+  var e = document.createElement('div'); e.className = 'log-entry';
+  e.innerHTML = '<span class="log-time">'+ts()+'</span><span class="log-'+(type||'info')+'">'+msg+'</span>';
+  p.appendChild(e); p.scrollTop = p.scrollHeight;
 }
 
-async function callClaude(messages, systemPrompt) {
-  const apiKey = getKey('anthropic_api_key');
-  if (!apiKey) throw new Error('Anthropic API key not set');
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, system: systemPrompt, messages })
-  });
-  return res.json();
+async function callClaude(messages, sys) {
+  var k = getKey('anthropic_api_key'); if(!k) throw new Error('Anthropic API key not set');
+  var r = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:sys,messages:messages})});
+  var d = await r.json(); if(d.error) throw new Error('Claude: '+d.error.message); return d;
 }
 
-// ── Direct Slack API ──────────────────────────────────────────────────────────
-async function slackGet(path, params = {}) {
-  const token = getKey('slack_bot_token');
-  if (!token) throw new Error('Slack bot token not set');
-  const url = new URL('https://slack.com/api/' + path);
-  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+async function slackGet(path, params) {
+  var k = getKey('slack_bot_token'); if(!k) throw new Error('Slack bot token not set');
+  var u = new URL('https://slack.com/api/'+path);
+  Object.keys(params||{}).forEach(function(key){ u.searchParams.set(key, params[key]); });
+  var ctrl = new AbortController(), tid = setTimeout(function(){ ctrl.abort(); }, 10000);
   try {
-    const res = await fetch(url, {
-      headers: { Authorization: 'Bearer ' + token },
-      signal: controller.signal
-    });
-    clearTimeout(timeout);
-    const data = await res.json();
-    if (!data.ok) throw new Error(`Slack API error: ${data.error || 'unknown'}`);
-    return data;
-  } catch (e) {
-    clearTimeout(timeout);
-    if (e.name === 'AbortError') throw new Error('Slack request timed out — check your bot token and that the bot is invited to the channel');
-    throw e;
-  }
+    var r = await fetch(u.toString(),{headers:{'Authorization':'Bearer '+k},signal:ctrl.signal});
+    clearTimeout(tid); var d = await r.json();
+    if(!d.ok) throw new Error('Slack: '+(d.error||'unknown')); return d;
+  } catch(e) { clearTimeout(tid); if(e.name==='AbortError') throw new Error('Slack timed out - check token and bot invite'); throw e; }
 }
 
-// ── Direct Notion API ─────────────────────────────────────────────────────────
-async function notionPost(path, body) {
-  const token = getKey('notion_token');
-  if (!token) throw new Error('Notion integration token not set');
-  const res = await fetch('https://api.notion.com/v1/' + path, {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Notion-Version': '2022-06-28'
-    },
-    body: JSON.stringify(body)
-  });
-  return res.json();
+async function notionReq(method, path, body) {
+  var k = getKey('notion_token'); if(!k) throw new Error('Notion token not set');
+  var opts = {method:method,headers:{'Authorization':'Bearer '+k,'Content-Type':'application/json','Notion-Version':'2022-06-28'}};
+  if(body) opts.body = JSON.stringify(body);
+  var r = await fetch('https://api.notion.com/v1/'+path, opts);
+  var d = await r.json(); if(d.status && d.status>=400) throw new Error('Notion: '+(d.message||d.code||'error')); return d;
 }
 
-async function findNotionDatabase(dbName) {
-  const data = await notionPost('search', { query: dbName, filter: { value: 'database', property: 'object' } });
-  const match = (data.results || []).find(r =>
-    r.object === 'database' &&
-    (r.title?.[0]?.plain_text || '').toLowerCase().includes(dbName.toLowerCase())
-  );
-  return match ? match.id : null;
+async function findNotionDb(name) {
+  var d = await notionReq('POST','search',{query:name,filter:{value:'database',property:'object'}});
+  var m = (d.results||[]).find(function(r){ return r.object==='database' && (r.title||[]).some(function(t){ return (t.plain_text||'').toLowerCase().includes(name.toLowerCase()); }); });
+  return m ? m.id : null;
 }
-
 
 async function fetchAnnouncements() {
-  const channel = document.getElementById('slackChannel').value.trim() || 'test_l10n_qa';
-  const queue = document.getElementById('announcementQueue');
-  queue.innerHTML = '<div class="empty-queue">⏳ Fetching from Slack...</div>';
-  log(`→ Fetching messages from channel ${channel}...`, 'info');
-
+  var channelId = document.getElementById('slackChannelId').value.trim();
+  var queue = document.getElementById('fetchQueue');
+  if(!channelId){ queue.innerHTML='<div class="empty-state">Paste a channel ID first</div>'; return; }
+  queue.innerHTML='<div class="empty-state">Fetching from Slack...</div>';
+  log('Fetching from '+channelId+'...','info');
   try {
-    // Use channel ID directly — no lookup needed
-    const history = await slackGet('conversations.history', { channel: channel, limit: 50 });
-    const messages = history.messages || [];
-
-    const announcements = [];
-    for (const m of messages) {
-      if ((m.text || '').toUpperCase().includes('FEATURE ANNOUNCEMENT')) {
-        const featureMatch = m.text.match(/Feature:\s*([^\n]+)/i);
-        announcements.push({
-          text: m.text,
-          ts: m.ts,
-          user: m.username || m.user || 'Unknown',
-          feature: featureMatch ? featureMatch[1].trim() : 'Feature Announcement'
-        });
-        if (announcements.length >= 5) break;
+    var h = await slackGet('conversations.history',{channel:channelId,limit:50});
+    var msgs = h.messages||[], anns = [];
+    for(var i=0;i<msgs.length;i++){
+      var m = msgs[i];
+      if((m.text||'').toUpperCase().indexOf('FEATURE ANNOUNCEMENT')>=0){
+        var feat = 'Feature Announcement';
+        var lines = (m.text||'').split('\n');
+        for(var j=0;j<lines.length;j++){ if(lines[j].toLowerCase().indexOf('feature:')>=0){ feat=lines[j].replace(/Feature:\s*/i,'').trim(); break; } }
+        anns.push({text:m.text,ts:m.ts,user:m.username||m.user||'Unknown',feature:feat});
+        if(anns.length>=5) break;
       }
     }
-
-    fetchedAnnouncements = announcements;
-    renderQueue(announcements);
-
-    if (announcements.length) {
-      log(`✓ Found ${announcements.length} feature announcement(s)`, 'ok');
-    } else {
-      log('⚠ No feature announcements found in recent messages', 'warn');
-    }
-  } catch (e) {
-    log(`✗ Slack fetch error: ${e.message}`, 'err');
-    queue.innerHTML = `<div class="empty-queue">✗ ${e.message}</div>`;
-  }
+    fetchedAnnouncements = anns;
+    renderQueue(anns);
+    log(anns.length ? 'Found '+anns.length+' announcement(s)' : 'No announcements found', anns.length?'ok':'warn');
+  } catch(e){ log(e.message,'err'); queue.innerHTML='<div class="empty-state">'+e.message+'</div>'; }
 }
 
-
-function renderQueue(announcements) {
-  const queue = document.getElementById('announcementQueue');
-  if (!announcements.length) {
-    queue.innerHTML = '<div class="empty-queue">No feature announcements found in recent messages.</div>';
-    document.getElementById('generateBtn').disabled = true;
-    return;
-  }
-  queue.innerHTML = '';
-  announcements.forEach((ann, i) => {
-    const item = document.createElement('div');
-    item.className = 'announcement-item';
-    item.id = `ann-${i}`;
-    const preview = ann.text.replace(/\*/g, '').replace(/\n/g, ' ').slice(0, 120);
-    item.innerHTML = `
-      <div class="ann-badge new">NEW</div>
-      <div class="ann-header">
-        <div class="ann-feature">${ann.feature || 'Feature Announcement'}</div>
-        <div class="ann-time">${ann.ts ? new Date(parseFloat(ann.ts) * 1000).toLocaleString('en-GB', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'recent'}</div>
-      </div>
-      <div class="ann-preview">${preview}...</div>
-      <div class="select-indicator"></div>
-    `;
-    item.onclick = () => selectAnnouncement(i, item);
-    queue.appendChild(item);
+function renderQueue(anns) {
+  var q = document.getElementById('fetchQueue');
+  document.getElementById('fetchGenerateBtn').disabled = true;
+  if(!anns.length){ q.innerHTML='<div class="empty-state">No feature announcements found</div>'; return; }
+  q.innerHTML='';
+  anns.forEach(function(ann,i){
+    var item = document.createElement('div'); item.className='announcement-item';
+    var preview = (ann.text||'').split('\n').join(' ').replace(/[*]/g,'').slice(0,120);
+    var timeStr = ann.ts ? new Date(parseFloat(ann.ts)*1000).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    item.innerHTML='<div class="ann-badge">NEW</div><div class="ann-feature">'+(ann.feature||'Feature Announcement')+'</div><div class="ann-time">'+timeStr+'</div><div class="ann-preview">'+preview+'...</div><div class="select-dot"></div>';
+    item.onclick=function(){ selectAnnouncement(i,item); };
+    q.appendChild(item);
   });
 }
 
-function selectAnnouncement(i, el) {
-  document.querySelectorAll('.announcement-item').forEach(a => a.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedAnnouncement = fetchedAnnouncements[i];
-  document.getElementById('generateBtn').disabled = false;
+function selectAnnouncement(i,el){
+  document.querySelectorAll('.announcement-item').forEach(function(a){ a.classList.remove('selected'); });
+  el.classList.add('selected'); selectedAnnouncement=fetchedAnnouncements[i];
+  document.getElementById('fetchGenerateBtn').disabled=false;
 }
 
-async function generateScenarios(text, featureTag) {
-  const system = `You are a senior QA engineer for Fresha, a salon & spa booking platform. Given a feature announcement, generate comprehensive QA test scenarios.
-Respond ONLY with valid JSON, no markdown:
-{
-  "feature_name": "short name",
-  "resource_links": ["any URLs found in the announcement text, e.g. Loom, screenshots, docs — empty array if none"],
-  "scenarios": [
-    {
-      "title": "concise scenario title as it would appear in a QA database",
-      "type": "functional|edge_case|regression|ux|performance",
-      "priority": "high|medium|low",
-      "description": "Given [context], when [action], then [expected outcome]",
-      "navigation": "App section > Sub-section > Action (e.g. Point of Sale > Add to Cart > Select product)",
-      "notes": "Additional instructions a freelance tester needs: specific UI elements to check, known edge cases, error states to watch for, dependencies on other scenarios (e.g. 'Note: Online bookings must be activated first'). Write as plain sentences or numbered steps if multi-part.",
-      "steps": ["Step 1", "Step 2", "Step 3"]
-    }
-  ]
-}
-Generate 6–8 scenarios. Extract any URLs from the announcement text into resource_links.`;
-
-  const data = await callClaude(
-    [{ role: 'user', content: `Feature area: ${featureTag}\n\nAnnouncement:\n${text}` }],
-    system
-  );
-
-  const textContent = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
-  const clean = textContent.replace(/```json|```/g, '').trim();
-  return JSON.parse(clean);
+async function generateScenarios(text) {
+  var sys = 'You are a senior QA engineer for Fresha. Given a feature announcement, generate QA test scenarios.\nRespond ONLY with valid JSON, no markdown:\n{"feature_name":"short name","resource_links":["URLs found in text, empty array if none"],"scenarios":[{"title":"title","type":"functional|edge_case|regression|ux|performance","priority":"high|medium|low","description":"Given [context], when [action], then [expected outcome]","navigation":"App > Section > Action","notes":"Extra instructions for testers","steps":["Step 1","Step 2"]}]}\nGenerate 6-8 scenarios.';
+  var d = await callClaude([{role:'user',content:'Generate QA scenarios:\n\n'+text}], sys);
+  var txt = (d.content||[]).filter(function(b){ return b.type==='text'; }).map(function(b){ return b.text; }).join('');
+  return JSON.parse(txt.replace(/```json|```/g,'').trim());
 }
 
-async function createNotionScenario(dbId, scenario, featureName, featureTag, resourceLinks) {
-  // Find DB ID if not provided
-  if (!dbId) {
-    const dbName = document.getElementById('dbName')?.value || document.getElementById('dbName2')?.value || 'fresha partner scenarios';
-    dbId = await findNotionDatabase(dbName);
-    if (!dbId) throw new Error(`Database "${dbName}" not found — check the name and make sure the integration is connected`);
-  }
-
-  const resourceText = (resourceLinks || []).join('\n');
-
-  // Build rich text helper
-  const rt = (text) => [{ type: 'text', text: { content: text || '' } }];
-
-  // Build body blocks
-  const children = [
-    { object: 'block', type: 'heading_2', heading_2: { rich_text: rt('Description') } },
-    { object: 'block', type: 'paragraph', paragraph: { rich_text: rt(scenario.description || '') } },
+async function createNotionPage(dbId, s, featureName, links) {
+  function rt(t){ return [{type:'text',text:{content:(t||'').slice(0,2000)}}]; }
+  var ch = [
+    {object:'block',type:'heading_2',heading_2:{rich_text:rt('Description')}},
+    {object:'block',type:'paragraph',paragraph:{rich_text:rt(s.description)}}
   ];
-
-  if (scenario.notes) {
-    children.push({ object: 'block', type: 'heading_2', heading_2: { rich_text: rt('Notes') } });
-    children.push({ object: 'block', type: 'paragraph', paragraph: { rich_text: rt(scenario.notes) } });
-  }
-
-  children.push({ object: 'block', type: 'heading_2', heading_2: { rich_text: rt('Test Steps') } });
-  (scenario.steps || []).forEach((step, i) => {
-    children.push({ object: 'block', type: 'numbered_list_item', numbered_list_item: { rich_text: rt(step) } });
-  });
-
-  if (resourceText) {
-    children.push({ object: 'block', type: 'heading_2', heading_2: { rich_text: rt('Other Resources') } });
-    children.push({ object: 'block', type: 'paragraph', paragraph: { rich_text: rt(resourceText) } });
-  }
-
-  const properties = {
-    'Testing scenario': { title: rt(scenario.title) },
-    'Feature / Area':   { select: { name: 'New features' } },
-    'Navigation':       { rich_text: rt(scenario.navigation || '') },
-  };
-
-  if (resourceText) {
-    properties['Other resources'] = { url: resourceLinks[0] || null };
-  }
-
-  const page = await notionPost('pages', { parent: { database_id: dbId }, properties, children });
-
-  if (page.url) return { url: page.url };
-  if (page.id)  return { url: `https://notion.so/${page.id.replace(/-/g, '')}` };
-  if (page.message) throw new Error(page.message);
-  throw new Error('Page creation failed');
+  if(s.notes){ ch.push({object:'block',type:'heading_2',heading_2:{rich_text:rt('Notes')}}); ch.push({object:'block',type:'paragraph',paragraph:{rich_text:rt(s.notes)}}); }
+  ch.push({object:'block',type:'heading_2',heading_2:{rich_text:rt('Test Steps')}});
+  (s.steps||[]).forEach(function(step){ ch.push({object:'block',type:'numbered_list_item',numbered_list_item:{rich_text:rt(step)}}); });
+  if(links&&links.length){ ch.push({object:'block',type:'heading_2',heading_2:{rich_text:rt('Other Resources')}}); links.forEach(function(url){ ch.push({object:'block',type:'paragraph',paragraph:{rich_text:[{type:'text',text:{content:url,link:{url:url}}}]}}); }); }
+  var page = await notionReq('POST','pages',{parent:{database_id:dbId},properties:{'Testing scenario':{title:rt(s.title)},'Feature / Area':{select:{name:'New features'}},'Navigation':{rich_text:rt(s.navigation||'')}},children:ch});
+  if(page.url) return page.url;
+  if(page.id) return 'https://notion.so/'+page.id.replace(/-/g,'');
+  throw new Error('No URL returned');
 }
 
-
-async function runPipeline() {
-  if (!selectedAnnouncement) return;
-  await executePipeline(selectedAnnouncement.text, document.getElementById('dbName').value, '');
-  // Mark as processed
-  const selected = document.querySelector('.announcement-item.selected');
-  if (selected) { selected.classList.add('processed'); selected.querySelector('.ann-badge').textContent = 'DONE'; selected.querySelector('.ann-badge').className = 'ann-badge done'; }
-  selectedAnnouncement = null;
-  document.getElementById('generateBtn').disabled = true;
+async function runPipelineFetch(){
+  if(!selectedAnnouncement) return;
+  var btn=document.getElementById('fetchGenerateBtn');
+  await runPipeline(selectedAnnouncement.text, document.getElementById('dbName').value.trim(), btn);
+  var sel=document.querySelector('.announcement-item.selected');
+  if(sel){ sel.classList.add('processed'); var b=sel.querySelector('.ann-badge'); if(b){b.textContent='DONE';b.className='ann-badge done';} }
+  selectedAnnouncement=null; btn.disabled=true;
 }
 
-async function runPipelineManual() {
-  const text = document.getElementById('announcementText').value.trim();
-  if (!text) { log('⚠ Paste an announcement first', 'warn'); return; }
-  await executePipeline(text, document.getElementById('dbName2').value, '');
+async function runPipelineManual(){
+  var text=document.getElementById('manualText').value.trim();
+  if(!text){ log('Paste an announcement first','warn'); return; }
+  await runPipeline(text, document.getElementById('dbName2').value.trim(), document.getElementById('manualGenerateBtn'));
 }
 
-async function executePipeline(text, dbName, featureTag) {
-  const btn = document.getElementById('generateBtn');
-  const btn2 = document.getElementById('generateBtn2');
-  [btn, btn2].forEach(b => { if(b) { b.disabled = true; b.textContent = '⏳ Running...'; }});
-
-  document.getElementById('scenariosList').innerHTML = '';
-  document.getElementById('resultsSection').style.display = 'none';
-  document.getElementById('logPanel').innerHTML = '';
-
+async function runPipeline(text, dbName, btn){
+  btn.disabled=true; btn.textContent='Running...';
+  document.getElementById('scenariosList').innerHTML='';
+  document.getElementById('resultsSection').style.display='none';
+  document.getElementById('logPanel').innerHTML='';
   try {
-    log('→ Generating QA scenarios...', 'info');
-    let parsed;
-    try {
-      parsed = await generateScenarios(text, featureTag);
-      log(`✓ Generated ${parsed.scenarios.length} scenarios for "${parsed.feature_name}"`, 'ok');
-    } catch(e) { log(`✗ Generation failed: ${e.message}`, 'err'); throw e; }
-
-    document.getElementById('resultsSection').style.display = 'block';
-    document.getElementById('summaryCount').textContent = `${parsed.scenarios.length} scenarios`;
-    document.getElementById('summaryStatus').textContent = 'saving to notion...';
-    document.getElementById('summaryEmoji').textContent = '💾';
-
-    // Show extracted resource links if any
-    const resourceLinks = parsed.resource_links || [];
-    const resourceBar = document.getElementById('resourceBar');
-    if (resourceLinks.length) {
-      resourceBar.style.display = 'flex';
-      document.getElementById('resourceLinks').innerHTML = resourceLinks
-        .map(url => `<a href="${url}" target="_blank" rel="noopener" style="color:var(--accent2); font-family:'JetBrains Mono',monospace; font-size:11px; word-break:break-all;">${url}</a>`)
-        .join('');
-    } else {
-      resourceBar.style.display = 'none';
+    log('Generating scenarios with Claude...','info');
+    var parsed; try{ parsed=await generateScenarios(text); } catch(e){ log('Generation failed: '+e.message,'err'); throw e; }
+    log('Generated '+parsed.scenarios.length+' scenarios for "'+parsed.feature_name+'"','ok');
+    var links=parsed.resource_links||[];
+    var rb=document.getElementById('resourceBar');
+    if(links.length){ rb.style.display='flex'; document.getElementById('resourceLinks').innerHTML=links.map(function(u){ return '<a href="'+u+'" target="_blank" style="color:var(--accent2);font-size:11px;font-family:monospace;">'+u+'</a>'; }).join(''); } else { rb.style.display='none'; }
+    document.getElementById('resultsSection').style.display='block';
+    document.getElementById('summaryCount').textContent=parsed.scenarios.length+' scenarios';
+    document.getElementById('summaryStatus').textContent='finding notion database...';
+    document.getElementById('summaryEmoji').textContent='🔍';
+    parsed.scenarios.forEach(function(s,i){ renderCard(s,i); });
+    log('Finding Notion database "'+dbName+'"...','info');
+    var dbId; try{ dbId=await findNotionDb(dbName); if(!dbId) throw new Error('Database "'+dbName+'" not found. Check name and integration connection.'); log('Found database','ok'); } catch(e){ log(e.message,'err'); throw e; }
+    document.getElementById('summaryStatus').textContent='saving to notion...';
+    document.getElementById('summaryEmoji').textContent='💾';
+    var saved=0, failed=0;
+    for(var i=0;i<parsed.scenarios.length;i++){
+      var s=parsed.scenarios[i]; setCardStatus(i,'saving');
+      log('Saving: "'+s.title+'"...','info');
+      try{ var url=await createNotionPage(dbId,s,parsed.feature_name,links); setCardStatus(i,'saved',url); saved++; log('Saved: "'+s.title+'"','ok'); }
+      catch(e){ setCardStatus(i,'failed',null); failed++; log('Failed: "'+s.title+'" - '+e.message,'err'); }
     }
-
-    parsed.scenarios.forEach((s,i) => renderScenarioCard(s,i));
-
-    log(`→ Saving to Notion database "${dbName}"...`, 'info');
-    let saved = 0, failed = 0;
-
-    for (let i = 0; i < parsed.scenarios.length; i++) {
-      const s = parsed.scenarios[i];
-      updateStatus(i, 'saving');
-      log(`→ Saving: "${s.title}"...`, 'info');
-      try {
-        const result = await createNotionScenario(null, s, parsed.feature_name, featureTag, parsed.resource_links || []);
-        updateStatus(i, 'saved', result.url); saved++;
-        log(`✓ Saved: "${s.title}"${result.url ? ' → ' + result.url : ''}`, 'ok');
-      } catch(e) {
-        updateStatus(i, 'failed', null); failed++;
-        log(`✗ Failed: "${s.title}" — ${e.message}`, 'err');
-      }
-    }
-
-    document.getElementById('summaryCount').textContent = `${saved}/${parsed.scenarios.length} saved`;
-    document.getElementById('summaryStatus').textContent = failed ? `${failed} failed — check log` : 'all saved to notion ✓';
-    document.getElementById('summaryEmoji').textContent = failed ? '⚠️' : '✅';
-    log(`─── Done: ${saved} saved, ${failed} failed ───`, saved === parsed.scenarios.length ? 'ok' : 'warn');
-  } catch(e) {
-    log(`✗ Pipeline error: ${e.message}`, 'err');
-  } finally {
-    if(btn) { btn.disabled = false; btn.textContent = '✨ Generate & Save Selected to Notion'; }
-    if(btn2) { btn2.disabled = false; btn2.textContent = '✨ Generate & Save to Notion'; }
-  }
+    document.getElementById('summaryCount').textContent=saved+'/'+parsed.scenarios.length+' saved';
+    document.getElementById('summaryStatus').textContent=failed ? failed+' failed' : 'all saved to Notion!';
+    document.getElementById('summaryEmoji').textContent=failed?'⚠️':'✅';
+    log('Done: '+saved+' saved, '+failed+' failed', saved===parsed.scenarios.length?'ok':'warn');
+  } catch(e){ log('Pipeline error: '+e.message,'err'); }
+  finally { btn.disabled=false; btn.textContent=btn.id==='fetchGenerateBtn'?'✨ Generate & Save Selected to Notion':'✨ Generate & Save to Notion'; }
 }
 
-function renderScenarioCard(s, i) {
-  const list = document.getElementById('scenariosList');
-  const card = document.createElement('div');
-  card.className = 'scenario-card'; card.id = `sc-${i}`;
-  card.innerHTML = `
-    <div class="scenario-header">
-      <div class="scenario-title">${s.title}</div>
-      <span class="scenario-status status-pending" id="sc-status-${i}">PENDING</span>
-    </div>
-    <div class="scenario-meta">
-      <span class="tag priority-${s.priority}">${s.priority.toUpperCase()}</span>
-      <span class="tag">${s.type}</span>
-      <span class="tag tag-new-features">🏷 New features</span>
-    </div>
-    ${s.navigation ? `<div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--text3); margin-bottom:6px;">📍 ${s.navigation}</div>` : ''}
-    <div class="scenario-desc">${s.description}</div>
-    ${s.notes ? `<div style="margin-top:8px; padding:8px 10px; background:rgba(255,209,102,0.06); border-left:2px solid rgba(255,209,102,0.4); border-radius:0 6px 6px 0; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--text2); line-height:1.6;"><span style="color:var(--warning); font-weight:700;">NOTES</span> ${s.notes}</div>` : ''}
-    <div id="sc-link-${i}" style="display:none; margin-top:8px;">
-      <a id="sc-link-anchor-${i}" href="#" target="_blank" rel="noopener" style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent2); text-decoration:none; display:inline-flex; align-items:center; gap:4px; padding:4px 10px; background:rgba(123,97,255,0.1); border:1px solid rgba(123,97,255,0.25); border-radius:6px;">↗ Open in Notion</a>
-    </div>`;
+function renderCard(s,i){
+  var list=document.getElementById('scenariosList'), card=document.createElement('div');
+  card.className='scenario-card'; card.id='sc-'+i;
+  card.innerHTML='<div class="sc-header"><div class="sc-title">'+s.title+'</div><span class="sc-status s-pending" id="sc-status-'+i+'">PENDING</span></div><div class="sc-meta"><span class="tag '+s.priority+'">'+s.priority.toUpperCase()+'</span><span class="tag">'+s.type+'</span><span class="tag nf">New features</span></div>'+(s.navigation?'<div class="sc-nav">📍 '+s.navigation+'</div>':'')+'<div class="sc-desc">'+s.description+'</div>'+(s.notes?'<div class="sc-notes"><strong style="color:var(--warning)">NOTES</strong> '+s.notes+'</div>':'')+'<div class="sc-link" id="sc-link-'+i+'"><a href="#" id="sc-anchor-'+i+'" target="_blank">↗ Open in Notion</a></div>';
   list.appendChild(card);
 }
 
-function updateStatus(i, status, notionUrl) {
-  const card = document.getElementById(`sc-${i}`);
-  const el = document.getElementById(`sc-status-${i}`);
-  if (!card || !el) return;
-  const map = { saving:['status-saving','SAVING...'], saved:['status-saved','SAVED ✓'], failed:['status-failed','FAILED ✗'] };
-  const [cls, label] = map[status] || ['status-pending','PENDING'];
-  el.className = `scenario-status ${cls}`; el.textContent = label;
-  if (status === 'saved') {
-    card.classList.add('saved');
-    if (notionUrl) {
-      const linkWrap = document.getElementById(`sc-link-${i}`);
-      const anchor = document.getElementById(`sc-link-anchor-${i}`);
-      if (linkWrap && anchor) { anchor.href = notionUrl; linkWrap.style.display = 'block'; }
-    }
-  }
-  if (status === 'failed') card.classList.add('failed');
+function setCardStatus(i,status,url){
+  var card=document.getElementById('sc-'+i), el=document.getElementById('sc-status-'+i);
+  if(!card||!el) return;
+  var map={saving:['s-saving','SAVING...'],saved:['s-saved','SAVED ✓'],failed:['s-failed','FAILED ✗']};
+  var cls=map[status]||['s-pending','PENDING']; el.className='sc-status '+cls[0]; el.textContent=cls[1];
+  if(status==='saved'){ card.classList.add('saved'); if(url){ var ld=document.getElementById('sc-link-'+i),la=document.getElementById('sc-anchor-'+i); if(ld&&la){la.href=url;ld.style.display='block';} } }
+  if(status==='failed') card.classList.add('failed');
 }
 
-function resetResults() {
-  document.getElementById('scenariosList').innerHTML = '';
-  document.getElementById('resultsSection').style.display = 'none';
-  document.getElementById('logPanel').innerHTML = '<div class="log-entry"><span class="log-time">--:--:--</span><span class="log-info">Waiting...</span></div>';
+function resetResults(){
+  document.getElementById('scenariosList').innerHTML='';
+  document.getElementById('resultsSection').style.display='none';
+  document.getElementById('logPanel').innerHTML='<div class="log-entry"><span class="log-time">--:--:--</span><span class="log-info">Waiting...</span></div>';
 }
 </script>
 </body>
