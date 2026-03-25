@@ -152,12 +152,29 @@
   <span class="badge badge-notion">● Notion</span>
 </div>
 
-<div class="api-key-bar">
-  <div class="input-group">
-    <label>ANTHROPIC API KEY</label>
-    <input type="password" id="apiKeyInput" placeholder="sk-ant-..." oninput="saveApiKey()" />
+<div class="api-key-bar" style="flex-direction:column; gap:10px;">
+  <div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--text3); letter-spacing:1px; text-transform:uppercase; margin-bottom:2px;">🔑 API Keys — saved in your browser, never shared</div>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <div class="input-group" style="flex:1">
+      <label>ANTHROPIC API KEY</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." oninput="saveAllKeys()" />
+    </div>
+    <div class="api-key-status missing" id="apiKeyStatus" style="padding-top:18px;">⚠</div>
   </div>
-  <div class="api-key-status missing" id="apiKeyStatus">⚠ not set</div>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <div class="input-group" style="flex:1">
+      <label>SLACK BOT TOKEN</label>
+      <input type="password" id="slackTokenInput" placeholder="xoxb-..." oninput="saveAllKeys()" />
+    </div>
+    <div class="api-key-status missing" id="slackTokenStatus" style="padding-top:18px;">⚠</div>
+  </div>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <div class="input-group" style="flex:1">
+      <label>NOTION INTEGRATION TOKEN</label>
+      <input type="password" id="notionTokenInput" placeholder="ntn_..." oninput="saveAllKeys()" />
+    </div>
+    <div class="api-key-status missing" id="notionTokenStatus" style="padding-top:18px;">⚠</div>
+  </div>
 </div>
 
 <div class="tabs">
@@ -313,52 +330,40 @@ let fetchedAnnouncements = [];
 
 // Load saved API key on startup
 window.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('anthropic_api_key');
-  if (saved) {
-    document.getElementById('apiKeyInput').value = saved;
-    saveApiKey();
-  }
+  const keys = ['anthropic_api_key','slack_bot_token','notion_token'];
+  const ids  = ['apiKeyInput','slackTokenInput','notionTokenInput'];
+  keys.forEach((k,i) => {
+    const v = localStorage.getItem(k);
+    if (v) { document.getElementById(ids[i]).value = v; }
+  });
+  saveAllKeys();
 });
 
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['fetch','manual','setup'][i] === name));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+function setStatus(elId, ok) {
+  const el = document.getElementById(elId);
+  el.textContent = ok ? '✓' : '⚠';
+  el.className = 'api-key-status ' + (ok ? 'ok' : 'missing');
 }
 
-function ts() { return new Date().toLocaleTimeString('en-GB', { hour12: false }); }
-
-function log(msg, type = 'info') {
-  const panel = document.getElementById('logPanel');
-  const entry = document.createElement('div');
-  entry.className = 'log-entry';
-  entry.innerHTML = `<span class="log-time">${ts()}</span><span class="log-${type}">${msg}</span>`;
-  panel.appendChild(entry);
-  panel.scrollTop = panel.scrollHeight;
+function saveAllKeys() {
+  const ak = document.getElementById('apiKeyInput').value.trim();
+  const st = document.getElementById('slackTokenInput').value.trim();
+  const nt = document.getElementById('notionTokenInput').value.trim();
+  if (ak.length > 20) localStorage.setItem('anthropic_api_key', ak);
+  if (st.length > 20) localStorage.setItem('slack_bot_token', st);
+  if (nt.length > 20) localStorage.setItem('notion_token', nt);
+  setStatus('apiKeyStatus',     ak.length > 20);
+  setStatus('slackTokenStatus', st.length > 20);
+  setStatus('notionTokenStatus',nt.length > 20);
 }
 
-function getApiKey() {
-  return localStorage.getItem('anthropic_api_key') || document.getElementById('apiKeyInput')?.value.trim() || '';
+function getKey(name) {
+  return localStorage.getItem(name) || '';
 }
 
-function saveApiKey() {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  const statusEl = document.getElementById('apiKeyStatus');
-  if (key.length > 20) {
-    localStorage.setItem('anthropic_api_key', key);
-    statusEl.textContent = '✓ saved';
-    statusEl.className = 'api-key-status ok';
-  } else {
-    statusEl.textContent = '⚠ not set';
-    statusEl.className = 'api-key-status missing';
-  }
-}
-
-async function callClaude(messages, systemPrompt, mcpServers = []) {
-  const apiKey = getApiKey();
-  if (!apiKey) throw new Error('No API key set — paste your Anthropic API key at the top');
-  const body = { model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: systemPrompt, messages };
-  if (mcpServers.length) body.mcp_servers = mcpServers;
+async function callClaude(messages, systemPrompt) {
+  const apiKey = getKey('anthropic_api_key');
+  if (!apiKey) throw new Error('Anthropic API key not set');
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -367,62 +372,79 @@ async function callClaude(messages, systemPrompt, mcpServers = []) {
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true'
     },
+    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, system: systemPrompt, messages })
+  });
+  return res.json();
+}
+
+// ── Direct Slack API ──────────────────────────────────────────────────────────
+async function slackGet(path, params = {}) {
+  const token = getKey('slack_bot_token');
+  if (!token) throw new Error('Slack bot token not set');
+  const url = new URL('https://slack.com/api/' + path);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+  return res.json();
+}
+
+// ── Direct Notion API ─────────────────────────────────────────────────────────
+async function notionPost(path, body) {
+  const token = getKey('notion_token');
+  if (!token) throw new Error('Notion integration token not set');
+  const res = await fetch('https://api.notion.com/v1/' + path, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Notion-Version': '2022-06-28'
+    },
     body: JSON.stringify(body)
   });
   return res.json();
 }
 
+async function findNotionDatabase(dbName) {
+  const data = await notionPost('search', { query: dbName, filter: { value: 'database', property: 'object' } });
+  const match = (data.results || []).find(r =>
+    r.object === 'database' &&
+    (r.title?.[0]?.plain_text || '').toLowerCase().includes(dbName.toLowerCase())
+  );
+  return match ? match.id : null;
+}
+
+
 async function fetchAnnouncements() {
-  const channel = document.getElementById('slackChannel').value.trim() || 'fresha_team';
+  const channel = document.getElementById('slackChannel').value.trim() || 'test_l10n_qa';
   const queue = document.getElementById('announcementQueue');
   queue.innerHTML = '<div class="empty-queue">⏳ Fetching from Slack...</div>';
   log(`→ Fetching messages from #${channel}...`, 'info');
 
-  const system = `You are a Slack assistant. Search the channel "${channel}" for messages containing "FEATURE ANNOUNCEMENT". 
-Return ONLY a JSON array of matches — no markdown, no preamble:
-[{"text": "full message text", "ts": "timestamp string", "user": "username or display name", "feature": "extracted feature name"}]
-Return an empty array [] if none found. Maximum 5 most recent.`;
-
   try {
-    const data = await callClaude(
-      [{ role: 'user', content: `Find feature announcement messages in #${channel}` }],
-      system,
-      [{ type: 'url', url: 'https://mcp.slack.com/mcp', name: 'slack-mcp' }]
-    );
+    // Look up channel ID from name
+    const chanList = await slackGet('conversations.list', { types: 'public_channel', limit: 200 });
+    const chanObj = (chanList.channels || []).find(c => c.name === channel);
+    if (!chanObj) throw new Error(`Channel #${channel} not found — make sure the bot is invited to it`);
 
-    // Try to extract from tool results first
-    let announcements = [];
-    const toolResults = data.content?.filter(b => b.type === 'mcp_tool_result') || [];
-    const textBlocks = data.content?.filter(b => b.type === 'text') || [];
+    const history = await slackGet('conversations.history', { channel: chanObj.id, limit: 50 });
+    const messages = history.messages || [];
 
-    // Try parsing text response as JSON
-    for (const block of textBlocks) {
-      const clean = (block.text || '').replace(/```json|```/g, '').trim();
-      try {
-        const parsed = JSON.parse(clean);
-        if (Array.isArray(parsed)) { announcements = parsed; break; }
-      } catch {}
-    }
-
-    // Fallback: try to extract from Slack messages in tool results
-    if (!announcements.length) {
-      for (const r of toolResults) {
-        const raw = r.content?.[0]?.text || '';
+    const announcements = [];
+    for (const m of messages) {
+      if ((m.text || '').toUpperCase().includes('FEATURE ANNOUNCEMENT')) {
+        const featureMatch = m.text.match(/Feature:\s*([^\n]+)/i);
+        // Get user display name
+        let userName = m.username || m.user || 'Unknown';
         try {
-          const parsed = JSON.parse(raw);
-          const messages = parsed.messages || parsed.ok && parsed.messages || [];
-          for (const m of messages) {
-            if ((m.text || '').toUpperCase().includes('FEATURE ANNOUNCEMENT')) {
-              const featureMatch = m.text.match(/Feature:\s*([^\n]+)/i);
-              announcements.push({
-                text: m.text,
-                ts: m.ts,
-                user: m.username || m.user || 'Unknown',
-                feature: featureMatch ? featureMatch[1].trim() : 'Feature Announcement'
-              });
-            }
-          }
+          const userInfo = await slackGet('users.info', { user: m.user });
+          userName = userInfo.user?.real_name || userInfo.user?.name || userName;
         } catch {}
+        announcements.push({
+          text: m.text,
+          ts: m.ts,
+          user: userName,
+          feature: featureMatch ? featureMatch[1].trim() : 'Feature Announcement'
+        });
+        if (announcements.length >= 5) break;
       }
     }
 
@@ -436,9 +458,10 @@ Return an empty array [] if none found. Maximum 5 most recent.`;
     }
   } catch (e) {
     log(`✗ Slack fetch error: ${e.message}`, 'err');
-    queue.innerHTML = '<div class="empty-queue">✗ Could not fetch from Slack. Check your connection.</div>';
+    queue.innerHTML = `<div class="empty-queue">✗ ${e.message}</div>`;
   }
 }
+
 
 function renderQueue(announcements) {
   const queue = document.getElementById('announcementQueue');
@@ -505,57 +528,57 @@ Generate 6–8 scenarios. Extract any URLs from the announcement text into resou
 }
 
 async function createNotionScenario(dbId, scenario, featureName, featureTag, resourceLinks) {
-  const resourceText = resourceLinks && resourceLinks.length
-    ? resourceLinks.join('\n')
-    : '';
-
-  const system = `You are a Notion assistant. Use the create-pages tool to create a page in the "fresha partner scenarios" database.
-
-Set these properties using the EXACT property names as they appear in the database:
-- "Testing scenario" (title): "${scenario.title}"
-- "Feature / Area": "New features"  ← always this exact value
-- "Navigation": "${scenario.navigation || ''}"
-- "Other resources": "${resourceText}" ← paste any URLs here if the property supports rich text or URL type
-- "Notes": leave blank as a property — the notes go in the page body below
-
-Body content:
-**Feature:** ${featureName}
-**Priority:** ${scenario.priority} | **Type:** ${scenario.type}
-
-**Description:**
-${scenario.description}
-
-**Notes:**
-${scenario.notes || ''}
-
-**Test Steps:**
-${scenario.steps.map((s,i)=>`${i+1}. ${s}`).join('\n')}
-
-${resourceText ? `**Other resources:**\n${resourceText}` : ''}
-
-After creating the page, respond with ONLY the page URL on a single line.`;
-
-  const data = await callClaude(
-    [{ role: 'user', content: `Create Notion QA scenario page: ${scenario.title}` }],
-    system,
-    [{ type: 'url', url: 'https://mcp.notion.com/mcp', name: 'notion-mcp' }]
-  );
-
-  const toolResults = data.content?.filter(b => b.type === 'mcp_tool_result') || [];
-  for (const r of toolResults) {
-    try {
-      const p = JSON.parse(r.content?.[0]?.text || '');
-      if (p.url) return { url: p.url };
-      if (p.id) return { url: `https://notion.so/${p.id.replace(/-/g,'')}` };
-    } catch {}
+  // Find DB ID if not provided
+  if (!dbId) {
+    const dbName = document.getElementById('dbName')?.value || document.getElementById('dbName2')?.value || 'fresha partner scenarios';
+    dbId = await findNotionDatabase(dbName);
+    if (!dbId) throw new Error(`Database "${dbName}" not found — check the name and make sure the integration is connected`);
   }
-  const textContent = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
-  const urlMatch = textContent.match(/https:\/\/(?:www\.)?notion\.so\/[^\s)>\n]+/);
-  if (urlMatch) return { url: urlMatch[0] };
-  const uuidMatch = textContent.match(/[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}/i);
-  if (uuidMatch) return { url: `https://notion.so/${uuidMatch[0].replace(/-/g,'')}` };
-  return { url: null };
+
+  const resourceText = (resourceLinks || []).join('\n');
+
+  // Build rich text helper
+  const rt = (text) => [{ type: 'text', text: { content: text || '' } }];
+
+  // Build body blocks
+  const children = [
+    { object: 'block', type: 'heading_2', heading_2: { rich_text: rt('Description') } },
+    { object: 'block', type: 'paragraph', paragraph: { rich_text: rt(scenario.description || '') } },
+  ];
+
+  if (scenario.notes) {
+    children.push({ object: 'block', type: 'heading_2', heading_2: { rich_text: rt('Notes') } });
+    children.push({ object: 'block', type: 'paragraph', paragraph: { rich_text: rt(scenario.notes) } });
+  }
+
+  children.push({ object: 'block', type: 'heading_2', heading_2: { rich_text: rt('Test Steps') } });
+  (scenario.steps || []).forEach((step, i) => {
+    children.push({ object: 'block', type: 'numbered_list_item', numbered_list_item: { rich_text: rt(step) } });
+  });
+
+  if (resourceText) {
+    children.push({ object: 'block', type: 'heading_2', heading_2: { rich_text: rt('Other Resources') } });
+    children.push({ object: 'block', type: 'paragraph', paragraph: { rich_text: rt(resourceText) } });
+  }
+
+  const properties = {
+    'Testing scenario': { title: rt(scenario.title) },
+    'Feature / Area':   { select: { name: 'New features' } },
+    'Navigation':       { rich_text: rt(scenario.navigation || '') },
+  };
+
+  if (resourceText) {
+    properties['Other resources'] = { url: resourceLinks[0] || null };
+  }
+
+  const page = await notionPost('pages', { parent: { database_id: dbId }, properties, children });
+
+  if (page.url) return { url: page.url };
+  if (page.id)  return { url: `https://notion.so/${page.id.replace(/-/g, '')}` };
+  if (page.message) throw new Error(page.message);
+  throw new Error('Page creation failed');
 }
+
 
 async function runPipeline() {
   if (!selectedAnnouncement) return;
