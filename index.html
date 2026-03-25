@@ -353,6 +353,12 @@ function saveAllKeys() {
   setStatus('notionTokenStatus',nt.length > 20);
 }
 
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['fetch','manual','setup'][i] === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
 function getKey(name) {
   return localStorage.getItem(name) || '';
 }
