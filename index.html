@@ -191,7 +191,7 @@
     <div class="channel-row">
       <div class="input-group">
         <label>SLACK CHANNEL</label>
-        <input type="text" id="slackChannel" value="fresha_team" placeholder="channel name (no #)" />
+        <input type="text" id="slackChannel" value="test_l10n_qa" placeholder="channel name (no #)" />
       </div>
       <button class="btn btn-sm btn-accent" onclick="fetchAnnouncements()">↻ Fetch</button>
     </div>
@@ -202,8 +202,6 @@
         <input type="text" id="dbName" value="fresha partner scenarios" />
       </div>
       <div class="input-group">
-        <label>FEATURE TAG</label>
-        <input type="text" id="featureTag" value="POS" />
       </div>
     </div>
 
@@ -229,8 +227,6 @@
         <input type="text" id="dbName2" value="fresha partner scenarios" />
       </div>
       <div class="input-group">
-        <label>FEATURE TAG</label>
-        <input type="text" id="featureTag2" value="POS" />
       </div>
     </div>
   </div>
@@ -383,8 +379,22 @@ async function slackGet(path, params = {}) {
   if (!token) throw new Error('Slack bot token not set');
   const url = new URL('https://slack.com/api/' + path);
   Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
-  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
-  return res.json();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: 'Bearer ' + token },
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    const data = await res.json();
+    if (!data.ok) throw new Error(`Slack API error: ${data.error || 'unknown'}`);
+    return data;
+  } catch (e) {
+    clearTimeout(timeout);
+    if (e.name === 'AbortError') throw new Error('Slack request timed out — check your bot token and that the bot is invited to the channel');
+    throw e;
+  }
 }
 
 // ── Direct Notion API ─────────────────────────────────────────────────────────
@@ -582,7 +592,7 @@ async function createNotionScenario(dbId, scenario, featureName, featureTag, res
 
 async function runPipeline() {
   if (!selectedAnnouncement) return;
-  await executePipeline(selectedAnnouncement.text, document.getElementById('dbName').value, document.getElementById('featureTag').value);
+  await executePipeline(selectedAnnouncement.text, document.getElementById('dbName').value, '');
   // Mark as processed
   const selected = document.querySelector('.announcement-item.selected');
   if (selected) { selected.classList.add('processed'); selected.querySelector('.ann-badge').textContent = 'DONE'; selected.querySelector('.ann-badge').className = 'ann-badge done'; }
@@ -593,7 +603,7 @@ async function runPipeline() {
 async function runPipelineManual() {
   const text = document.getElementById('announcementText').value.trim();
   if (!text) { log('⚠ Paste an announcement first', 'warn'); return; }
-  await executePipeline(text, document.getElementById('dbName2').value, document.getElementById('featureTag2').value);
+  await executePipeline(text, document.getElementById('dbName2').value, '');
 }
 
 async function executePipeline(text, dbName, featureTag) {
