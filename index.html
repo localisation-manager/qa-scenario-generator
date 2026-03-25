@@ -169,7 +169,10 @@
     <label>PASTE ANNOUNCEMENT</label>
     <textarea id="manualText" placeholder="Paste the feature announcement here..."></textarea>
     <label>NOTION DATABASE</label>
-    <input type="text" id="dbName2" value="Fresha Partner Testing Scenarios [L10N]" />
+    <select id="dbName2" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:9px 12px;outline:none;margin-bottom:12px;appearance:none;">
+      <option value="a4ba8c626fbe4311949f4f89ce4a8cd6">L10N Fresha Partner Testing Scenarios</option>
+      <option value="031f5fdab91841ec8ba29d31e185f22e">L10N Marketplace Testing Scenarios</option>
+    </select>
   </div>
   <button class="btn btn-primary" id="manualGenerateBtn" onclick="runPipelineManual()">&#x2728; Generate &amp; Save to Notion</button>
 </div>
@@ -374,7 +377,7 @@ async function runPipeline(text, dbName, btn){
     document.getElementById('summaryEmoji').textContent='🔍';
     parsed.scenarios.forEach(function(s,i){ renderCard(s,i); });
     log('Finding Notion database "'+dbName+'"...','info');
-    var dbId = '61f69f12693e4539baa166301e7b8224'; log('Using database ID directly','ok');
+    var dbId = dbName; log('Using database: '+dbName,'ok');
     document.getElementById('summaryStatus').textContent='saving to notion...';
     document.getElementById('summaryEmoji').textContent='💾';
     var saved=0, failed=0;
