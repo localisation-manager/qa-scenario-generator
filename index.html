@@ -316,8 +316,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('anthropic_api_key');
   if (saved) {
     document.getElementById('apiKeyInput').value = saved;
-    document.getElementById('apiKeyStatus').textContent = '✓ saved';
-    document.getElementById('apiKeyStatus').className = 'api-key-status ok';
+    saveApiKey();
   }
 });
 
@@ -345,7 +344,7 @@ function getApiKey() {
 function saveApiKey() {
   const key = document.getElementById('apiKeyInput').value.trim();
   const statusEl = document.getElementById('apiKeyStatus');
-  if (key.startsWith('sk-ant-')) {
+  if (key.length > 20) {
     localStorage.setItem('anthropic_api_key', key);
     statusEl.textContent = '✓ saved';
     statusEl.className = 'api-key-status ok';
