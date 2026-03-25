@@ -155,7 +155,7 @@
     </div>
     <div style="margin-top:12px;">
       <label>NOTION DATABASE</label>
-      <input type="text" id="dbName" value="fresha partner scenarios" />
+      <input type="text" id="dbName" value="Fresha Partner Testing Scenarios [L10N]" />
     </div>
     <div class="section-label" style="margin-top:4px;">Unprocessed announcements</div>
     <div id="fetchQueue"><div class="empty-state">Click &#x21BB; Fetch to load announcements from Slack</div></div>
@@ -374,7 +374,7 @@ async function runPipeline(text, dbName, btn){
     document.getElementById('summaryEmoji').textContent='🔍';
     parsed.scenarios.forEach(function(s,i){ renderCard(s,i); });
     log('Finding Notion database "'+dbName+'"...','info');
-    var dbId; try{ dbId=await findNotionDb(dbName); if(!dbId) throw new Error('Database "'+dbName+'" not found. Check name and integration connection.'); log('Found database','ok'); } catch(e){ log(e.message,'err'); throw e; }
+    var dbId = '61f69f12693e4539baa166301e7b8224'; log('Using database ID directly','ok');
     document.getElementById('summaryStatus').textContent='saving to notion...';
     document.getElementById('summaryEmoji').textContent='💾';
     var saved=0, failed=0;
